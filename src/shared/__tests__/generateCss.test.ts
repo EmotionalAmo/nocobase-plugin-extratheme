@@ -79,6 +79,12 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     const empty = generateStylesheet(mergeConfig({ app: { font: { enabled: true, family: '' } } }), SEL);
     expect(empty).not.toContain('font-family');
   });
+
+  it('sanitizes a hand-typed custom family in the CSS rule (no breakout)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { font: { enabled: true, family: 'Arial;}html{x:1}' } } }), SEL);
+    expect(css).toContain('font-family:Arialhtmlx:1!important;');
+    expect(css).not.toContain('}html{');
+  });
 });
 
 describe('isAppActive', () => {

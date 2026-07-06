@@ -1,5 +1,5 @@
 import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
-import { hexToRgba, buildBackground } from './color';
+import { hexToRgba, buildBackground, sanitizeFontFamily } from './color';
 
 /**
  * With the token-based redesign, surface COLORS come from the antd theme
@@ -75,8 +75,10 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   // Global font — the antd token (fontFamily) covers all antd text, but setting it
   // on <body> too catches non-antd/raw text: font-family INHERITS through the
   // transformed code-block boundary (unlike background), so this reaches everywhere.
-  if (app.font?.enabled && app.font.family) {
-    out.push(`${scope}{font-family:${app.font.family}!important;}`);
+  // Sanitize (custom families are hand-typed → could break out of the declaration).
+  const fontFamily = sanitizeFontFamily(app.font?.family || '');
+  if (app.font?.enabled && fontFamily) {
+    out.push(`${scope}{font-family:${fontFamily}!important;}`);
   }
 
   // Side nav (CSS, not a token — it's outer chrome, CSS reaches it, and a token

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgba, buildBackground } from '../color';
+import { hexToRgba, buildBackground, sanitizeFontFamily } from '../color';
 
 describe('hexToRgba', () => {
   it('converts 6-digit hex', () => {
@@ -45,5 +45,34 @@ describe('buildBackground', () => {
   });
   it('none -> transparent', () => {
     expect(buildBackground({ ...base, type: 'none' }).image).toBe('transparent');
+  });
+});
+
+describe('sanitizeFontFamily', () => {
+  it('keeps a normal stack intact', () => {
+    expect(sanitizeFontFamily('"Kaiti SC", serif')).toBe('"Kaiti SC", serif');
+  });
+  it('strips CSS-breakout chars (;{}<>\\)', () => {
+    expect(sanitizeFontFamily('Arial;}body{display:none')).toBe('Arialbodydisplay:none');
+    expect(sanitizeFontFamily('a<b>c\\d')).toBe('abcd');
+  });
+  it('strips CSS comment markers / and * (no stylesheet-swallowing)', () => {
+    expect(sanitizeFontFamily('Inter /*')).toBe('Inter');
+    expect(sanitizeFontFamily('a/*b*/c')).toBe('abc');
+  });
+  it('drops unbalanced quotes but keeps balanced ones', () => {
+    expect(sanitizeFontFamily('"Inter')).toBe('Inter');
+    expect(sanitizeFontFamily("O'Font")).toBe('OFont');
+    expect(sanitizeFontFamily('"Kaiti SC", serif')).toBe('"Kaiti SC", serif');
+  });
+  it('collapses newlines/tabs and trims', () => {
+    expect(sanitizeFontFamily('  Menlo\n\tmono  ')).toBe('Menlo mono');
+  });
+  it('empty/nullish -> empty string', () => {
+    expect(sanitizeFontFamily('')).toBe('');
+    expect(sanitizeFontFamily(undefined as any)).toBe('');
+  });
+  it('caps length at 200', () => {
+    expect(sanitizeFontFamily('a'.repeat(300)).length).toBe(200);
   });
 });

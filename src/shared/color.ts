@@ -1,5 +1,26 @@
 import type { BackgroundConfig } from './types';
 
+/**
+ * Sanitize a (possibly hand-typed) CSS font-family stack so it can't break out of
+ * the injected declaration or corrupt the whole <style>. A font-family only needs
+ * letters/digits/space/comma/quotes/hyphen. Strip:
+ *   - `;{}<>\` — declaration/rule breakout chars,
+ *   - `/` and `*` — CSS comment markers (a lone `/​*` would comment out the rest of
+ *     the injected stylesheet, silently killing every rule after the font),
+ *   - control chars (collapsed to a space),
+ * then drop quotes if unbalanced (a lone quote runs a CSS string past the `}`), and
+ * cap the length. Returns '' for empty.
+ */
+export function sanitizeFontFamily(family: string): string {
+  let s = (family || '')
+    .replace(/[;{}<>\\/*]/g, '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .trim();
+  if ((s.match(/"/g) || []).length % 2) s = s.replace(/"/g, '');
+  if ((s.match(/'/g) || []).length % 2) s = s.replace(/'/g, '');
+  return s.slice(0, 200);
+}
+
 /** '#ffffff', 0.9 -> 'rgba(255,255,255,0.9)'. Accepts 3/6-digit hex, with or without '#'. */
 export function hexToRgba(hex: string, alpha: number): string {
   let h = (hex || '').replace('#', '');

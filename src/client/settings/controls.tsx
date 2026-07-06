@@ -221,21 +221,46 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
 const FontGroup: React.FC<{ font: FontConfig; onChange: (f: FontConfig) => void }> = ({ font, onChange }) => {
   const t = useT();
   const set = (p: Partial<FontConfig>) => onChange({ ...font, ...p });
-  const presetValues = FONT_PRESETS.map((p) => p.value);
-  const isCustom = font.family !== '' && !presetValues.includes(font.family);
+  const matchesPreset = FONT_PRESETS.some((p) => p.value === font.family);
+  // Sticky custom mode: selecting 自定义 (or loading a non-preset family) opens the
+  // input and KEEPS it open even while the typed value happens to equal a preset.
+  // (The old `isCustom` was derived from the family alone, so picking 自定义 while on
+  // a preset left family = that preset → the input never showed and the Select
+  // snapped back.) A ref of the value WE last emitted lets us tell an external change
+  // (e.g. 重置本组) from our own edits: on an external change to a preset we clear
+  // custom mode, but a user typing a preset-equal value stays in custom mode.
+  const [customMode, setCustomMode] = React.useState(!matchesPreset);
+  const lastEmitted = React.useRef(font.family);
+  React.useEffect(() => {
+    if (font.family !== lastEmitted.current) {
+      lastEmitted.current = font.family;
+      setCustomMode(!FONT_PRESETS.some((p) => p.value === font.family));
+    }
+  }, [font.family]);
+  const emit = (family: string) => {
+    lastEmitted.current = family;
+    set({ family });
+  };
+  const showCustom = customMode || !matchesPreset;
   return (
     <Group first>
       <Row label={t('字体')}>
         <Select
           style={{ width: '100%' }}
-          value={isCustom ? '__custom__' : font.family}
-          onChange={(v) => set({ family: v === '__custom__' ? font.family || 'sans-serif' : v })}
+          value={showCustom ? '__custom__' : font.family}
+          onChange={(v) => {
+            if (v === '__custom__') setCustomMode(true);
+            else {
+              setCustomMode(false);
+              emit(v);
+            }
+          }}
           options={[...FONT_PRESETS.map((p) => ({ label: p.label, value: p.value })), { label: t('自定义'), value: '__custom__' }]}
         />
       </Row>
-      {isCustom && (
+      {showCustom && (
         <Row label={t('自定义字体')}>
-          <Input value={font.family} placeholder='"Font Name", sans-serif' onChange={(e) => set({ family: e.target.value })} />
+          <Input value={font.family} placeholder='"Font Name", sans-serif' onChange={(e) => emit(e.target.value)} />
         </Row>
       )}
       <div style={{ marginTop: 12, padding: '14px 16px', borderRadius: 10, background: '#f8fafc', border: '1px solid rgba(15,23,42,0.06)', fontFamily: font.family || undefined }}>

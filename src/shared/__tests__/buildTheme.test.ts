@@ -69,6 +69,11 @@ describe('buildThemeConfig', () => {
     expect(empty.token.fontFamily).toBeUndefined();
   });
 
+  it('sanitizes a hand-typed custom family (strips CSS-breakout chars)', () => {
+    const t = buildThemeConfig(mergeConfig({ app: { font: { enabled: true, family: '"My Font";}x{' } } }).app, BASE, NATIVE);
+    expect(t.token.fontFamily).toBe('"My Font"x');
+  });
+
   it('fontFamily reverts to native when font turned off (no pollution leak)', () => {
     // base carries a prior fontFamily (as if a previous "on" save fed it back)
     const polluted = { fontFamily: '"Kaiti SC",serif', colorPrimary: '#ff7900' };

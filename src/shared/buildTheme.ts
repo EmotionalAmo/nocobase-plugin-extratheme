@@ -1,5 +1,5 @@
 import type { AppConfig } from './types';
-import { hexToRgba } from './color';
+import { hexToRgba, sanitizeFontFamily } from './color';
 
 /**
  * Builds the antd ThemeConfig that ExtraTheme applies through NocoBase's global
@@ -102,8 +102,10 @@ export function buildThemeConfig(
 
   // Global font — a token so it penetrates isolated code-block roots. Independent
   // of the other sections. Empty family = keep native (already reset above).
-  if (app.font?.enabled && app.font.family) {
-    token.fontFamily = app.font.family;
+  // Sanitize: the family may be hand-typed (custom option).
+  const fontFamily = sanitizeFontFamily(app.font?.family || '');
+  if (app.font?.enabled && fontFamily) {
+    token.fontFamily = fontFamily;
   }
 
   return { name: 'ExtraTheme', token, components: { ...KEEP_OPAQUE_COMPONENTS }, cssVar: true };

@@ -45,15 +45,20 @@ describe('generateStylesheet', () => {
     expect(css).toContain('body.extra-theme-login-on .signin-page');
   });
 
-  it('dim>0 emits overlay rule', () => {
+  it('dim>0 composites a black layer over the background', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, background: { dim: 40 } as any } }), SEL);
-    expect(css).toContain('rgba(0,0,0,0.4)');
-    expect(css).toContain('::before');
+    expect(css).toContain('linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4))');
   });
 
-  it('dim=0 emits no overlay', () => {
+  it('dim=0 -> no black layer', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL);
-    expect(css).not.toContain('::before');
+    expect(css).not.toContain('rgba(0,0,0');
+  });
+
+  it('content selectors are each scoped (comma list)', () => {
+    const sel2 = { ...SEL, app: { ...SEL.app, content: '.a,.b' } };
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), sel2);
+    expect(css).toContain('body.extra-theme-app-on .a,body.extra-theme-app-on .b{background:transparent!important;}');
   });
 
   it('only app enabled -> no login rules', () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload } from 'antd';
-import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard } from '../../shared/types';
-import { GRADIENT_PRESETS } from '../../shared/defaults';
+import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig } from '../../shared/types';
+import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { useT } from '../useT';
 
 const ACCENT = '#6d5ae6';
@@ -218,6 +218,34 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
   );
 };
 
+const FontGroup: React.FC<{ font: FontConfig; onChange: (f: FontConfig) => void }> = ({ font, onChange }) => {
+  const t = useT();
+  const set = (p: Partial<FontConfig>) => onChange({ ...font, ...p });
+  const presetValues = FONT_PRESETS.map((p) => p.value);
+  const isCustom = font.family !== '' && !presetValues.includes(font.family);
+  return (
+    <Group first>
+      <Row label={t('字体')}>
+        <Select
+          style={{ width: '100%' }}
+          value={isCustom ? '__custom__' : font.family}
+          onChange={(v) => set({ family: v === '__custom__' ? font.family || 'sans-serif' : v })}
+          options={[...FONT_PRESETS.map((p) => ({ label: p.label, value: p.value })), { label: t('自定义'), value: '__custom__' }]}
+        />
+      </Row>
+      {isCustom && (
+        <Row label={t('自定义字体')}>
+          <Input value={font.family} placeholder='"Font Name", sans-serif' onChange={(e) => set({ family: e.target.value })} />
+        </Row>
+      )}
+      <div style={{ marginTop: 12, padding: '14px 16px', borderRadius: 10, background: '#f8fafc', border: '1px solid rgba(15,23,42,0.06)', fontFamily: font.family || undefined }}>
+        <div style={{ fontSize: 19, fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>{t('字体预览')} Aa 永和</div>
+        <div style={{ fontSize: 13, color: '#475569', marginTop: 5 }}>中文示例文本 · The quick brown fox · 0123456789</div>
+      </div>
+    </Group>
+  );
+};
+
 const LoginCardGroup: React.FC<{ card: LoginCard; onChange: (c: LoginCard) => void }> = ({ card, onChange }) => {
   const t = useT();
   const set = (p: Partial<LoginCard>) => onChange({ ...card, ...p });
@@ -266,6 +294,14 @@ export const AppForm: React.FC<{ app: AppConfig; onChange: (a: AppConfig) => voi
       >
         <div style={dimStyle(app.sider.enabled)}>
           <NavGroup nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
+        </div>
+      </Panel>
+      <Panel
+        title={t('全局字体')}
+        right={<Switch checked={app.font.enabled} onChange={(v) => onChange({ ...app, font: { ...app.font, enabled: v } })} />}
+      >
+        <div style={dimStyle(app.font.enabled)}>
+          <FontGroup font={app.font} onChange={(font) => onChange({ ...app, font })} />
         </div>
       </Panel>
     </div>

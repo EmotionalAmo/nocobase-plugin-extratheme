@@ -70,6 +70,13 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     out.push(`${scopedList(scope, s.header)}{${blur(app.header.blur)}}`);
   }
 
+  // Global font — the antd token (fontFamily) covers all antd text, but setting it
+  // on <body> too catches non-antd/raw text: font-family INHERITS through the
+  // transformed code-block boundary (unlike background), so this reaches everywhere.
+  if (app.font?.enabled && app.font.family) {
+    out.push(`${scope}{font-family:${app.font.family}!important;}`);
+  }
+
   // Side nav (CSS, not a token — it's outer chrome, CSS reaches it, and a token
   // only tints the inset menu → a seam). Tint the FULL-WIDTH sider container with
   // the exact configured value; clear the dark placeholder + the inset menu's own
@@ -92,9 +99,9 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   return out.join('\n');
 }
 
-/** True when any app-scope section (background/card, header, or sider) is on. */
+/** True when any app-scope section (background/card, header, sider, or font) is on. */
 export function isAppActive(app: AppConfig): boolean {
-  return !!(app.enabled || app.header.enabled || app.sider.enabled);
+  return !!(app.enabled || app.header.enabled || app.sider.enabled || app.font?.enabled);
 }
 
 /** Thin stylesheet: page background + frosted blur (surface colors are antd tokens). */

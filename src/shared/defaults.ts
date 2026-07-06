@@ -12,6 +12,21 @@ export const GRADIENT_PRESETS: Record<string, string[]> = {
 };
 
 /**
+ * Global font presets (label -> CSS font-family stack). All are SYSTEM-font stacks —
+ * no web-font is loaded (CSP-safe, offline-safe, zero-latency). value '' = system
+ * default (no override). CJK-first so Chinese text stays correct on macOS/Windows/Linux.
+ */
+export const FONT_PRESETS: { label: string; value: string }[] = [
+  { label: '系统默认', value: '' },
+  { label: '无衬线（苹方/雅黑）', value: '"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",Roboto,system-ui,sans-serif' },
+  { label: '思源黑体', value: '"Source Han Sans SC","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif' },
+  { label: '衬线（宋体）', value: '"Songti SC","Noto Serif CJK SC","SimSun",Georgia,"Times New Roman",serif' },
+  { label: '楷体', value: '"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC",serif' },
+  { label: '圆体', value: '"Yuanti SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif' },
+  { label: '等宽（代码）', value: '"SF Mono","JetBrains Mono","Fira Code",Consolas,"Courier New",monospace' },
+];
+
+/**
  * Starting values when an admin first enables the 工作区外观 group. Everything is
  * OFF by default (`enabled: false`) — these numbers only take visual effect once
  * the admin flips the switch on.
@@ -26,10 +41,12 @@ export const DEFAULT_APP: AppConfig = {
     dim: 0,
   },
   card: { glass: true, opacity: 72, blur: 12, border: true },
-  // header / sider are independent of the 工作区外观 (background+card) switch;
-  // all three default OFF so a fresh install changes nothing.
+  // header / sider / font are independent of the 工作区外观 (background+card) switch;
+  // all default OFF so a fresh install changes nothing. font.family defaults to the
+  // 无衬线 stack so flipping the switch on shows an immediate effect.
   header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark' },
   sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark' },
+  font: { enabled: false, family: FONT_PRESETS[1].value },
 };
 
 /** Starting values for the 登录页外观 group (independent of app). */

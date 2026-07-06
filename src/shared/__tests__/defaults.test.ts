@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_APP, DEFAULT_LOGIN, GRADIENT_PRESETS, mergeConfig } from '../defaults';
+import { DEFAULT_APP, DEFAULT_LOGIN, GRADIENT_PRESETS, FONT_PRESETS, mergeConfig } from '../defaults';
 
 describe('defaults', () => {
   it('app/login default disabled', () => {
@@ -15,6 +15,21 @@ describe('defaults', () => {
     expect(DEFAULT_APP.header).toMatchObject({ style: 'frosted', opacity: 90, blur: 14, text: 'dark' });
     expect(DEFAULT_APP.sider).toMatchObject({ style: 'frosted', opacity: 86, blur: 16 });
     expect(DEFAULT_APP.card).toMatchObject({ glass: true, opacity: 72, blur: 12 });
+  });
+  it('font defaults off with a non-empty sans family', () => {
+    expect(DEFAULT_APP.font.enabled).toBe(false);
+    expect(DEFAULT_APP.font.family).toBe(FONT_PRESETS[1].value);
+    expect(DEFAULT_APP.font.family.length).toBeGreaterThan(0);
+  });
+  it('FONT_PRESETS: first is system-default (empty), rest are non-empty stacks', () => {
+    expect(FONT_PRESETS[0]).toEqual({ label: '系统默认', value: '' });
+    expect(FONT_PRESETS.length).toBeGreaterThanOrEqual(5);
+    FONT_PRESETS.slice(1).forEach((p) => expect(p.value).toMatch(/sans-serif|serif|monospace/));
+  });
+  it('mergeConfig fills app.font from defaults when missing', () => {
+    const m = mergeConfig({ app: { enabled: true } });
+    expect(m.app.font.enabled).toBe(false);
+    expect(m.app.font.family).toBe(DEFAULT_APP.font.family);
   });
   it('login starting values match spec', () => {
     expect(DEFAULT_LOGIN.card).toMatchObject({ glass: true, opacity: 70, blur: 18, radius: 18, shadow: true });

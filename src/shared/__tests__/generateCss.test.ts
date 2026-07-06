@@ -70,10 +70,20 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, background: { dim: 40 } as any } }), SEL);
     expect(css).toContain('linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4))');
   });
+
+  it('font on -> font-family on body scope; off/empty -> none', () => {
+    const on = generateStylesheet(mergeConfig({ app: { font: { enabled: true, family: '"Kaiti SC",serif' } } }), SEL);
+    expect(on).toContain('body.extra-theme-app-on{font-family:"Kaiti SC",serif!important;}');
+    const off = generateStylesheet(mergeConfig({ app: { font: { enabled: false, family: '"Kaiti SC",serif' } } }), SEL);
+    expect(off).not.toContain('font-family');
+    const empty = generateStylesheet(mergeConfig({ app: { font: { enabled: true, family: '' } } }), SEL);
+    expect(empty).not.toContain('font-family');
+  });
 });
 
 describe('isAppActive', () => {
   it('false when all off', () => expect(isAppActive(mergeConfig({}).app)).toBe(false));
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));
   it('true when only 工作区外观 on', () => expect(isAppActive(mergeConfig({ app: { enabled: true } }).app)).toBe(true));
+  it('true when only font on', () => expect(isAppActive(mergeConfig({ app: { font: { enabled: true } } }).app)).toBe(true));
 });

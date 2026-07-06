@@ -52,6 +52,7 @@ const MANAGED_TOKENS = [
   'colorTextHeaderMenu',
   'colorTextHeaderMenuHover',
   'colorTextHeaderMenuActive',
+  'fontFamily',
 ];
 
 /**
@@ -98,6 +99,12 @@ export function buildThemeConfig(
   // non-uniform sider with a visible seam. The sider is OUTER chrome (not inside
   // a code-block), so CSS reaches it directly — generateStylesheet tints the
   // full-width sider container with the exact configured value instead.
+
+  // Global font — a token so it penetrates isolated code-block roots. Independent
+  // of the other sections. Empty family = keep native (already reset above).
+  if (app.font?.enabled && app.font.family) {
+    token.fontFamily = app.font.family;
+  }
 
   return { name: 'ExtraTheme', token, components: { ...KEEP_OPAQUE_COMPONENTS }, cssVar: true };
 }

@@ -35,12 +35,18 @@ export interface NavConfig {
   text: TextTone;
 }
 
+export interface FontConfig {
+  enabled: boolean; // global font override on/off, independent of the other sections
+  family: string; // CSS font-family stack; '' = system default (no override)
+}
+
 export interface AppConfig {
   enabled: boolean;
   background: BackgroundConfig;
   card: CardConfig;
   header: NavConfig;
   sider: NavConfig;
+  font: FontConfig;
 }
 
 export interface LoginCard {

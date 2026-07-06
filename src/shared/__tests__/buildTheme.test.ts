@@ -60,6 +60,24 @@ describe('buildThemeConfig', () => {
     expect(t.token.colorBgSider).toBeUndefined();
   });
 
+  it('font on -> fontFamily token set; off/empty -> not set', () => {
+    const on = buildThemeConfig(mergeConfig({ app: { font: { enabled: true, family: '"Kaiti SC",serif' } } }).app, BASE, NATIVE);
+    expect(on.token.fontFamily).toBe('"Kaiti SC",serif');
+    const off = buildThemeConfig(mergeConfig({ app: { font: { enabled: false, family: '"Kaiti SC",serif' } } }).app, BASE, NATIVE);
+    expect(off.token.fontFamily).toBeUndefined();
+    const empty = buildThemeConfig(mergeConfig({ app: { font: { enabled: true, family: '' } } }).app, BASE, NATIVE);
+    expect(empty.token.fontFamily).toBeUndefined();
+  });
+
+  it('fontFamily reverts to native when font turned off (no pollution leak)', () => {
+    // base carries a prior fontFamily (as if a previous "on" save fed it back)
+    const polluted = { fontFamily: '"Kaiti SC",serif', colorPrimary: '#ff7900' };
+    const native = { ...NATIVE, fontFamily: 'system-ui,sans-serif' };
+    const t = buildThemeConfig(mergeConfig({ app: { font: { enabled: false } } }).app, polluted, native);
+    expect(t.token.fontFamily).toBe('system-ui,sans-serif'); // restored to native
+    expect(t.token.colorPrimary).toBe('#ff7900'); // non-managed preserved
+  });
+
   it('pins the leak set (Table/Input/Select/...) opaque', () => {
     const t = buildThemeConfig(mergeConfig({ app: { enabled: true } }).app, BASE);
     expect(t.components.Table.colorBgContainer).toBe('#ffffff');

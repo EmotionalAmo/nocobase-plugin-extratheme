@@ -52,8 +52,13 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
           fontSize: 12,
         }
       : { flex: 1, borderRadius: 10, padding: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', color: '#1f2733', fontSize: 12 };
+    // controls (Input/Select/Table/…) stay OPAQUE in reality (KEEP_OPAQUE_COMPONENTS),
+    // even when the card around them is translucent — show that truthfully.
+    const opaque: React.CSSProperties = { background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6 };
+    // global font applies regardless of the workspace switch (it's independent).
+    const fontFamily = app.font?.enabled && app.font.family ? app.font.family : undefined;
     return (
-      <div style={{ ...box, ...(app.enabled ? bgStyle(app.background) : { background: '#f0f2f5' }) }}>
+      <div style={{ ...box, fontFamily, ...(app.enabled ? bgStyle(app.background) : { background: '#f0f2f5' }) }}>
         {/* header */}
         <div
           style={{
@@ -91,9 +96,17 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
             <div style={{ opacity: 0.8 }}>{t('订单')}</div>
             <div style={{ opacity: 0.8 }}>{t('报表')}</div>
           </div>
-          {/* content cards */}
+          {/* content cards — card A shows opaque controls (input + table) that stay
+              readable while the card itself is translucent */}
           <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={cardStyle}>{t('内容卡片')} A</div>
+            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span>{t('内容卡片')} A</span>
+              <div style={{ ...opaque, height: 22 }} />
+              <div style={{ ...opaque, overflow: 'hidden' }}>
+                <div style={{ height: 16, borderBottom: '1px solid rgba(0,0,0,0.07)' }} />
+                <div style={{ height: 16 }} />
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: 10, flex: 1 }}>
               <div style={cardStyle}>B</div>
               <div style={cardStyle}>C</div>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_APP, DEFAULT_LOGIN, GRADIENT_PRESETS, mergeConfig } from './defaults';
+import { DEFAULT_APP, DEFAULT_LOGIN, GRADIENT_PRESETS, mergeConfig } from '../defaults';
 
 describe('defaults', () => {
   it('app/login default disabled', () => {

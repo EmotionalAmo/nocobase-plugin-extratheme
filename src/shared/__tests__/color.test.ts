@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgba, buildBackground } from './color';
+import { hexToRgba, buildBackground } from '../color';
 
 describe('hexToRgba', () => {
   it('converts 6-digit hex', () => {

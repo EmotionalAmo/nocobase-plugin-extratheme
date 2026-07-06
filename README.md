@@ -113,6 +113,16 @@ docker exec nb-dev-app sh -lc 'cd /app/nocobase && \
   yarn nocobase db:sync'
 ```
 
+### GitLab sync
+
+The plugin is developed inside the `nocobase-plugin-dev` monorepo and mirrored to its
+own repo via `git subtree` (one-time remote add, then re-run push after each release):
+
+```bash
+git remote add extratheme-gitlab ssh://git@192.168.100.15:2222/EmotionalAmo/plugin-moretheme.git
+git subtree push --prefix=packages/plugins/@amo/plugin-extratheme extratheme-gitlab main
+```
+
 ---
 
 ## Known limits

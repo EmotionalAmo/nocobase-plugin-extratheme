@@ -63,10 +63,13 @@ export const SettingsPage: React.FC = () => {
    * setTheme still gives an immediate in-session result.
    */
   const applyTheme = async (app: AppConfig) => {
-    // Spread the CURRENT theme's token (preserves the user's own customizations —
-    // colorPrimary, colorSettings, etc.) — NOT just defaultTheme, or we'd wash them out.
+    // base = the CURRENT theme's token (preserves the user's own customizations —
+    // colorPrimary, colorSettings, …). native = pristine defaultTheme token — the
+    // source of truth for chrome tokens that must survive when a section is off,
+    // so "all off" reverts cleanly instead of inheriting a prior on-state.
     const base = (theme as any)?.token || (defaultTheme as any)?.token || {};
-    const built = buildThemeConfig(app, base);
+    const native = (defaultTheme as any)?.token || {};
+    const built = buildThemeConfig(app, base, native);
     try {
       const list = await api.resource('themeConfig').list({ filter: { uid: THEME_UID }, pageSize: 1 });
       const existing = list?.data?.data?.[0];

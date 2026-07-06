@@ -50,11 +50,20 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).not.toContain('.ant-layout-header{backdrop-filter');
   });
 
-  it('sider frosted -> transparent placeholder + blur + tamed scrollbar', () => {
-    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-layout-sider{background:transparent!important;backdrop-filter:blur(18px);');
+  it('sider on -> uniform full-width tint on sider-children + cleared menu bg + no border', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, color: '#ffffff', opacity: 50 } } }), SEL);
+    // placeholder transparent, tint the FULL-WIDTH container (not the inset menu)
+    expect(css).toContain('body.extra-theme-app-on .ant-layout-sider{background:transparent!important;}');
+    expect(css).toContain('.ant-layout-sider-children{background:rgba(255,255,255,0.5)!important;border-right:none!important;');
+    // menu itself cleared + its "invisible" right border removed
+    expect(css).toContain('.ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;');
     expect(css).toContain('.ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px');
     expect(css).toContain('::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18)');
+  });
+
+  it('sider frosted -> blur lands on the sider-children container', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
+    expect(css).toMatch(/\.ant-layout-sider-children\{background:[^}]*backdrop-filter:blur\(18px\);/);
   });
 
   it('dim>0 composites a black layer into the body background', () => {

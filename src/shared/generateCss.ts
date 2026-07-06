@@ -70,16 +70,22 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     out.push(`${scopedList(scope, s.header)}{${blur(app.header.blur)}}`);
   }
 
-  // Side nav: blur + neutralize the dark antd Sider placeholder bg (#001529) that
-  // otherwise shows as a dark band at the right edge, and tame the menu scrollbar
-  // (the menu scrolls internally — its default scrollbar reads as a dark seam).
+  // Side nav (CSS, not a token — it's outer chrome, CSS reaches it, and a token
+  // only tints the inset menu → a seam). Tint the FULL-WIDTH sider container with
+  // the exact configured value; clear the dark placeholder + the inset menu's own
+  // bg + the menu/container right border (the "invisible border") so the whole
+  // sider is one uniform panel; blur; tame the internal scrollbar.
   if (app.sider.enabled) {
+    const siderBg = hexToRgba(app.sider.color, app.sider.opacity / 100);
     const glass = app.sider.style === 'frosted' && app.sider.blur > 0 ? blur(app.sider.blur) : '';
-    out.push(`${scopedList(scope, s.sider)}{background:transparent!important;${glass}}`);
+    const fg = app.sider.text === 'light' ? '#f8fafc' : '#1f2733';
     out.push(
-      `${scope} ${s.sider} .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
-        `${scope} ${s.sider} .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +
-        `${scope} ${s.sider} .ant-menu::-webkit-scrollbar-track{background:transparent;}`,
+      `${scope} .ant-layout-sider{background:transparent!important;}` +
+        `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}}` +
+        `${scope} .ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;color:${fg};}` +
+        `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
+        `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +
+        `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-track{background:transparent;}`,
     );
   }
 

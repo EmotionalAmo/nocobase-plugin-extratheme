@@ -54,6 +54,11 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
         : '';
     const cardBorder = app.card.border ? 'border:1px solid rgba(255,255,255,0.5);' : '';
     out.push(`${scopedList(scope, s.card)}{background:${cardBg}!important;${cardBlur}${cardBorder}}`);
+    // Custom code-blocks render nested wrapper divs that carry their OWN opaque
+    // white background (no stable class) — clear class-less/id-less divs inside
+    // a card so the card's translucency + the page background show through.
+    // Interactive controls all carry classes, so they are untouched.
+    out.push(`${scopedList(scope, s.card + ' div:not([class]):not([id])')}{background-color:transparent!important;}`);
   }
   // Top / side nav — each independently toggleable, no dependency on the above.
   if (app.header.enabled) out.push(navRule(scope, s.header, app.header));

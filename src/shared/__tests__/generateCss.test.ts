@@ -50,6 +50,7 @@ describe('generateStylesheet', () => {
     expect(css).toContain('body.extra-theme-app-on .ant-layout{');
     expect(css).toContain('linear-gradient(135deg,#e0f2fe,#ede9fe)');
     expect(css).toContain('.ant-card{');
+    expect(css).toContain('.ant-card div:not([class]):not([id])'); // clears nested custom white wrappers
     expect(css).not.toContain('.ant-layout-header'); // header off by default
   });
 

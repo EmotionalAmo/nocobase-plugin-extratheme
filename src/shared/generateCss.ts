@@ -59,12 +59,22 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     }
   }
 
-  // Nav blur — independent of the workspace switch (colors come from tokens).
+  // Top nav blur — independent of the workspace switch (colors come from tokens).
   if (app.header.enabled && app.header.style === 'frosted' && app.header.blur > 0) {
     out.push(`${scopedList(scope, s.header)}{${blur(app.header.blur)}}`);
   }
-  if (app.sider.enabled && app.sider.style === 'frosted' && app.sider.blur > 0) {
-    out.push(`${scopedList(scope, s.sider)}{${blur(app.sider.blur)}}`);
+
+  // Side nav: blur + neutralize the dark antd Sider placeholder bg (#001529) that
+  // otherwise shows as a dark band at the right edge, and tame the menu scrollbar
+  // (the menu scrolls internally — its default scrollbar reads as a dark seam).
+  if (app.sider.enabled) {
+    const glass = app.sider.style === 'frosted' && app.sider.blur > 0 ? blur(app.sider.blur) : '';
+    out.push(`${scopedList(scope, s.sider)}{background:transparent!important;${glass}}`);
+    out.push(
+      `${scope} ${s.sider} .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
+        `${scope} ${s.sider} .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +
+        `${scope} ${s.sider} .ant-menu::-webkit-scrollbar-track{background:transparent;}`,
+    );
   }
 
   return out.join('\n');

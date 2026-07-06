@@ -49,9 +49,11 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).not.toContain('.ant-layout-header{backdrop-filter');
   });
 
-  it('sider frosted+blur -> backdrop-filter on sider', () => {
+  it('sider frosted -> transparent placeholder + blur + tamed scrollbar', () => {
     const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-layout-sider{backdrop-filter:blur(18px);');
+    expect(css).toContain('body.extra-theme-app-on .ant-layout-sider{background:transparent!important;backdrop-filter:blur(18px);');
+    expect(css).toContain('.ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px');
+    expect(css).toContain('::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18)');
   });
 
   it('dim>0 composites a black layer into the body background', () => {

@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Space, message, Spin } from 'antd';
+import { Button, Space, message, Spin } from 'antd';
 import { useAPIClient } from '@nocobase/client';
 import type { ExtraThemeConfig } from '../../shared/types';
-import { mergeConfig, DEFAULT_APP, DEFAULT_LOGIN } from '../../shared/defaults';
-import { AppForm, LoginForm } from './controls';
+import { mergeConfig, DEFAULT_APP } from '../../shared/defaults';
+import { AppForm } from './controls';
 import { LivePreview } from './LivePreview';
 import { useT } from '../useT';
 
 const CHANGE_EVENT = 'extra-theme:changed';
 
+// NOTE: the 登录页外观 (sign-in) tab is intentionally not exposed yet — the
+// login config/injector plumbing stays in the codebase (dormant, default-off)
+// for a future re-add. This page configures the 工作区外观 (/admin + /v) only.
 export const SettingsPage: React.FC = () => {
   const t = useT();
   const api = useAPIClient();
   const [cfg, setCfg] = useState<ExtraThemeConfig>(() => mergeConfig({}));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<'app' | 'login'>('app');
 
   useEffect(() => {
     let alive = true;
@@ -54,7 +56,6 @@ export const SettingsPage: React.FC = () => {
     setSaving(true);
     try {
       await api.request({ url: 'extraTheme:set', method: 'post', data: { scope: 'app', config: cfg.app } });
-      await api.request({ url: 'extraTheme:set', method: 'post', data: { scope: 'login', config: cfg.login } });
       window.dispatchEvent(new Event(CHANGE_EVENT));
       message.success(t('已保存并应用'));
     } catch {
@@ -64,10 +65,7 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const resetTab = () => {
-    if (tab === 'app') setCfg({ ...cfg, app: JSON.parse(JSON.stringify(DEFAULT_APP)) });
-    else setCfg({ ...cfg, login: JSON.parse(JSON.stringify(DEFAULT_LOGIN)) });
-  };
+  const reset = () => setCfg({ ...cfg, app: JSON.parse(JSON.stringify(DEFAULT_APP)) });
 
   if (loading) {
     return (
@@ -82,28 +80,22 @@ export const SettingsPage: React.FC = () => {
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* form */}
         <div style={{ flex: '1 1 420px', minWidth: 360, maxWidth: 560 }}>
-          <Tabs
-            activeKey={tab}
-            onChange={(k) => setTab(k as any)}
-            items={[
-              { key: 'app', label: t('工作区外观'), children: <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} /> },
-              { key: 'login', label: t('登录页外观'), children: <LoginForm login={cfg.login} onChange={(login) => setCfg({ ...cfg, login })} uploadImage={uploadImage} /> },
-            ]}
-          />
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>{t('工作区外观')}</div>
+          <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} />
           <Space style={{ marginTop: 16 }}>
             <Button type="primary" loading={saving} onClick={save}>
               {t('保存并应用')}
             </Button>
-            <Button onClick={resetTab}>{t('重置本组')}</Button>
+            <Button onClick={reset}>{t('重置本组')}</Button>
           </Space>
         </div>
 
         {/* live preview (sticky) */}
         <div style={{ flex: '1 1 380px', minWidth: 340, position: 'sticky', top: 16 }}>
           <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>{t('实时预览')}</div>
-          <LivePreview scope={tab} app={cfg.app} login={cfg.login} />
+          <LivePreview scope="app" app={cfg.app} login={cfg.login} />
           <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 10, lineHeight: 1.6 }}>
-            {t('提示：默认全部关闭，开启对应开关并保存后才生效；关闭插件或关闭开关立即恢复原生外观。')}
+            {t('提示：默认关闭，开启总开关并保存后才生效；关闭插件或关闭开关立即恢复原生外观。')}
           </div>
         </div>
       </div>

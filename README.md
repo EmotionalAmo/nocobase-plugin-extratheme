@@ -5,8 +5,9 @@
 Extends theming **beyond the native theme editor** (which only exposes antd tokens):
 custom page **background** (image upload / URL / gradient presets / solid color),
 surface **transparency**, **frosted-glass** (`backdrop-filter`), **top / side
-navigation** tint + blur, and a **global font** (curated system-font presets or a
-custom stack). Configured globally by an admin in one settings page and applied across
+navigation** tint + blur, and a **global font** — a curated system-font preset, a
+custom font-family stack, or an **uploaded font file** (works for every viewer, no
+local install). Configured globally by an admin in one settings page and applied across
 both clients.
 
 **Disabled by default** — enabling the plugin changes nothing until an admin turns a
@@ -42,6 +43,7 @@ re-bridges into every nested root, so they penetrate everywhere.
 | Page body | antd token | `colorBgLayout: transparent` (lets the bg show) |
 | Top nav color | antd token | `colorBgHeader` (NocoBase custom token) |
 | Global font | antd token (+ CSS) | `fontFamily`; also `body{font-family}` since it inherits through the boundary |
+| Uploaded font | CSS `@font-face` (+ token) | file → `attachments:create` → document-global `@font-face`, applied via the token so every viewer loads it (storage serves fonts with the right CORS header) |
 | Overlays stay opaque | antd token | `colorBgElevated: #fff` (Modal/Drawer/Dropdown/…) |
 | Controls stay readable | `components.<C>.colorBgContainer: #fff` | Input/Select/Table/DatePicker/… |
 | **Side nav** | **CSS** | Full-width `.ant-layout-sider-children` tint — a token only hits the inset menu and leaves a seam |

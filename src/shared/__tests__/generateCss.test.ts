@@ -85,6 +85,32 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('font-family:Arialhtmlx:1!important;');
     expect(css).not.toContain('}html{');
   });
+
+  it('upload source -> injects @font-face + applies the uploaded family', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/brand.woff2', name: 'Brand', format: 'woff2' } } } }),
+      SEL,
+    );
+    expect(css).toContain('@font-face{font-family:"Brand";src:url("http://h/brand.woff2") format("woff2");font-display:swap;}');
+    expect(css).toContain('body.extra-theme-app-on{font-family:"Brand"!important;}');
+  });
+
+  it('upload source -> format derived from the url extension when missing', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/brand.ttf', name: 'Brand', format: '' } } } }),
+      SEL,
+    );
+    expect(css).toContain('format("truetype")');
+  });
+
+  it('upload source with no url -> no @font-face and no font-family', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: '', name: 'X', format: '' } } } }),
+      SEL,
+    );
+    expect(css).not.toContain('@font-face');
+    expect(css).not.toContain('font-family');
+  });
 });
 
 describe('isAppActive', () => {

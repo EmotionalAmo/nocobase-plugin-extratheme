@@ -16,10 +16,12 @@ describe('defaults', () => {
     expect(DEFAULT_APP.sider).toMatchObject({ style: 'frosted', opacity: 86, blur: 16 });
     expect(DEFAULT_APP.card).toMatchObject({ glass: true, opacity: 72, blur: 12 });
   });
-  it('font defaults off with a non-empty sans family', () => {
+  it('font defaults off, system source, non-empty sans family, empty upload', () => {
     expect(DEFAULT_APP.font.enabled).toBe(false);
+    expect(DEFAULT_APP.font.source).toBe('system');
     expect(DEFAULT_APP.font.family).toBe(FONT_PRESETS[1].value);
     expect(DEFAULT_APP.font.family.length).toBeGreaterThan(0);
+    expect(DEFAULT_APP.font.upload).toEqual({ url: '', name: '', format: '' });
   });
   it('FONT_PRESETS: first is system-default (empty), rest are non-empty stacks', () => {
     expect(FONT_PRESETS[0]).toEqual({ label: '系统默认', value: '' });

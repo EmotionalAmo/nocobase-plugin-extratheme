@@ -1,5 +1,5 @@
 import React from 'react';
-import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload } from 'antd';
+import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button } from 'antd';
 import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig } from '../../shared/types';
 import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { useT } from '../useT';
@@ -218,17 +218,19 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
   );
 };
 
-const FontGroup: React.FC<{ font: FontConfig; onChange: (f: FontConfig) => void }> = ({ font, onChange }) => {
+type FontUploadResult = { url: string; name: string; format: string };
+
+const FontGroup: React.FC<{
+  font: FontConfig;
+  onChange: (f: FontConfig) => void;
+  uploadFont?: (f: File) => Promise<FontUploadResult>;
+}> = ({ font, onChange, uploadFont }) => {
   const t = useT();
   const set = (p: Partial<FontConfig>) => onChange({ ...font, ...p });
+  const setUpload = (p: Partial<FontConfig['upload']>) => onChange({ ...font, upload: { ...font.upload, ...p } });
+
+  // --- system source: sticky custom-mode (decoupled from the family value) ---
   const matchesPreset = FONT_PRESETS.some((p) => p.value === font.family);
-  // Sticky custom mode: selecting 自定义 (or loading a non-preset family) opens the
-  // input and KEEPS it open even while the typed value happens to equal a preset.
-  // (The old `isCustom` was derived from the family alone, so picking 自定义 while on
-  // a preset left family = that preset → the input never showed and the Select
-  // snapped back.) A ref of the value WE last emitted lets us tell an external change
-  // (e.g. 重置本组) from our own edits: on an external change to a preset we clear
-  // custom mode, but a user typing a preset-equal value stays in custom mode.
   const [customMode, setCustomMode] = React.useState(!matchesPreset);
   const lastEmitted = React.useRef(font.family);
   React.useEffect(() => {
@@ -242,33 +244,102 @@ const FontGroup: React.FC<{ font: FontConfig; onChange: (f: FontConfig) => void 
     set({ family });
   };
   const showCustom = customMode || !matchesPreset;
+
+  // --- upload source: load the uploaded font into the document so the preview
+  // renders it before saving (the injected @font-face only exists after save) ---
+  const up = font.upload;
+  React.useEffect(() => {
+    const FF = (window as any).FontFace;
+    if (font.source === 'upload' && up?.url && up?.name && FF && (document as any).fonts) {
+      try {
+        new FF(up.name, `url("${up.url}")`)
+          .load()
+          .then((f: any) => (document as any).fonts.add(f))
+          .catch(() => {});
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [font.source, up?.url, up?.name]);
+
+  const handleUpload = async (file: File) => {
+    if (uploadFont) {
+      const r = await uploadFont(file);
+      if (r.url) onChange({ ...font, upload: r });
+    }
+    return false; // never let antd auto-upload
+  };
+
+  const previewFamily = font.source === 'upload' && up?.url ? `"${up.name}"` : font.family || undefined;
+
   return (
     <Group first>
-      <Row label={t('字体')}>
-        <Select
-          style={{ width: '100%' }}
-          value={showCustom ? '__custom__' : font.family}
-          onChange={(v) => {
-            if (v === '__custom__') setCustomMode(true);
-            else {
-              setCustomMode(false);
-              emit(v);
-            }
-          }}
-          options={[...FONT_PRESETS.map((p) => ({ label: p.label, value: p.value })), { label: t('自定义'), value: '__custom__' }]}
+      <Row label={t('字体来源')}>
+        <Segmented
+          block
+          size="small"
+          value={font.source}
+          onChange={(v) => set({ source: v as any })}
+          options={[
+            { label: t('系统字体'), value: 'system' },
+            { label: t('上传字体'), value: 'upload' },
+          ]}
         />
       </Row>
-      {showCustom && (
-        <Row label={t('自定义字体')}>
-          <Input value={font.family} placeholder='"Font Name", sans-serif' onChange={(e) => emit(e.target.value)} />
+
+      {font.source === 'system' ? (
+        <>
+          <Row label={t('字体')}>
+            <Select
+              style={{ width: '100%' }}
+              value={showCustom ? '__custom__' : font.family}
+              onChange={(v) => {
+                if (v === '__custom__') setCustomMode(true);
+                else {
+                  setCustomMode(false);
+                  emit(v);
+                }
+              }}
+              options={[...FONT_PRESETS.map((p) => ({ label: p.label, value: p.value })), { label: t('自定义'), value: '__custom__' }]}
+            />
+          </Row>
+          {showCustom && (
+            <Row label={t('自定义字体')}>
+              <Input value={font.family} placeholder='"Font Name", sans-serif' onChange={(e) => emit(e.target.value)} />
+            </Row>
+          )}
+        </>
+      ) : up?.url ? (
+        <>
+          <Row label={t('字体名称')}>
+            <Input value={up.name} placeholder="Custom Font" onChange={(e) => setUpload({ name: e.target.value })} />
+          </Row>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 14 }}>
+            <span style={{ fontSize: 12, color: '#16a34a' }}>{t('已上传')}{up.format ? ` · ${up.format}` : ''}</span>
+            <Upload showUploadList={false} accept=".ttf,.otf,.woff,.woff2" beforeUpload={handleUpload}>
+              <Button type="link" size="small" style={{ padding: 0 }}>{t('重新上传')}</Button>
+            </Upload>
+            <Button type="link" size="small" danger style={{ padding: 0 }} onClick={() => onChange({ ...font, upload: { url: '', name: '', format: '' } })}>
+              {t('移除')}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Row label={t('上传字体文件')}>
+          <Upload showUploadList={false} accept=".ttf,.otf,.woff,.woff2" beforeUpload={handleUpload}>
+            <Button size="small">{t('选择字体文件')}</Button>
+          </Upload>
         </Row>
       )}
-      <div style={{ marginTop: 12, padding: '14px 16px', borderRadius: 10, background: '#f8fafc', border: '1px solid rgba(15,23,42,0.06)', fontFamily: font.family || undefined }}>
+
+      <div style={{ marginTop: 12, padding: '14px 16px', borderRadius: 10, background: '#f8fafc', border: '1px solid rgba(15,23,42,0.06)', fontFamily: previewFamily }}>
         <div style={{ fontSize: 19, fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>{t('字体预览')} Aa 永和</div>
         <div style={{ fontSize: 13, color: '#475569', marginTop: 5 }}>中文示例文本 · The quick brown fox · 0123456789</div>
       </div>
       <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8, lineHeight: 1.6 }}>
-        {t('提示：字体需系统已安装才生效；“无衬线/系统默认”通常与本机默认字体一致，选“楷体/宋体”等可看到明显变化。')}
+        {font.source === 'upload'
+          ? t('提示：上传字体对所有访问者生效，无需本机安装；中文字体文件较大，建议使用 woff2 或先做子集化以加快加载。')
+          : t('提示：字体需系统已安装才生效；“无衬线/系统默认”通常与本机默认字体一致，选“楷体/宋体”等可看到明显变化。')}
       </div>
     </Group>
   );
@@ -298,7 +369,12 @@ const LoginCardGroup: React.FC<{ card: LoginCard; onChange: (c: LoginCard) => vo
 
 // ---- public forms ----
 
-export const AppForm: React.FC<{ app: AppConfig; onChange: (a: AppConfig) => void; uploadImage?: (f: File) => Promise<string> }> = ({ app, onChange, uploadImage }) => {
+export const AppForm: React.FC<{
+  app: AppConfig;
+  onChange: (a: AppConfig) => void;
+  uploadImage?: (f: File) => Promise<string>;
+  uploadFont?: (f: File) => Promise<{ url: string; name: string; format: string }>;
+}> = ({ app, onChange, uploadImage, uploadFont }) => {
   const t = useT();
   return (
     <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'stretch' }}>
@@ -329,7 +405,7 @@ export const AppForm: React.FC<{ app: AppConfig; onChange: (a: AppConfig) => voi
         right={<Switch checked={app.font.enabled} onChange={(v) => onChange({ ...app, font: { ...app.font, enabled: v } })} />}
       >
         <div style={dimStyle(app.font.enabled)}>
-          <FontGroup font={app.font} onChange={(font) => onChange({ ...app, font })} />
+          <FontGroup font={app.font} onChange={(font) => onChange({ ...app, font })} uploadFont={uploadFont} />
         </div>
       </Panel>
     </div>

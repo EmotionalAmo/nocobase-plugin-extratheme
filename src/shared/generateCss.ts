@@ -1,5 +1,5 @@
 import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
-import { hexToRgba, buildBackground, sanitizeFontFamily } from './color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl } from './color';
 
 /**
  * With the token-based redesign, surface COLORS come from the antd theme
@@ -72,13 +72,25 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     out.push(`${scopedList(scope, s.header)}{${blur(app.header.blur)}}`);
   }
 
-  // Global font — the antd token (fontFamily) covers all antd text, but setting it
-  // on <body> too catches non-antd/raw text: font-family INHERITS through the
-  // transformed code-block boundary (unlike background), so this reaches everywhere.
-  // Sanitize (custom families are hand-typed → could break out of the declaration).
-  const fontFamily = sanitizeFontFamily(app.font?.family || '');
-  if (app.font?.enabled && fontFamily) {
-    out.push(`${scope}{font-family:${fontFamily}!important;}`);
+  // Global font. The antd token (buildTheme) covers antd text; setting font-family on
+  // <body> too catches non-antd/raw text (it INHERITS through the transformed
+  // code-block boundary, unlike background). For an UPLOADED font, inject a
+  // document-global @font-face so it loads for every viewer (no local install), then
+  // apply that family. Everything is sanitized (custom/name/url are hand-typed/derived).
+  const font = app.font;
+  if (font?.enabled) {
+    if (font.source === 'upload' && font.upload?.url) {
+      const name = sanitizeFontFamily(font.upload.name || '').replace(/["']/g, '') || 'ExtraTheme Font';
+      const url = sanitizeCssUrl(font.upload.url);
+      const fmt = font.upload.format || fontFormatFromUrl(font.upload.url);
+      if (url) {
+        out.push(`@font-face{font-family:"${name}";src:url("${url}")${fmt ? ` format("${fmt}")` : ''};font-display:swap;}`);
+        out.push(`${scope}{font-family:"${name}"!important;}`);
+      }
+    } else if (font.source !== 'upload') {
+      const fam = sanitizeFontFamily(font.family || '');
+      if (fam) out.push(`${scope}{font-family:${fam}!important;}`);
+    }
   }
 
   // Side nav (CSS, not a token — it's outer chrome, CSS reaches it, and a token

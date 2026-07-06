@@ -35,9 +35,17 @@ export interface NavConfig {
   text: TextTone;
 }
 
+export interface FontUpload {
+  url: string; // uploaded font file URL ('' = none)
+  name: string; // family name (derived from filename) used in @font-face + font-family
+  format: string; // @font-face src format: woff2 | woff | truetype | opentype ('' = omit)
+}
+
 export interface FontConfig {
   enabled: boolean; // global font override on/off, independent of the other sections
-  family: string; // CSS font-family stack; '' = system default (no override)
+  source: 'system' | 'upload'; // system font stack vs. an uploaded font file
+  family: string; // CSS font-family stack (system source); '' = system default (no override)
+  upload: FontUpload; // uploaded font (upload source)
 }
 
 export interface AppConfig {

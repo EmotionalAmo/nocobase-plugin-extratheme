@@ -69,6 +69,24 @@ describe('buildThemeConfig', () => {
     expect(empty.token.fontFamily).toBeUndefined();
   });
 
+  it('upload source -> token references the quoted uploaded family name', () => {
+    const t = buildThemeConfig(
+      mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/f.woff2', name: 'MyBrand', format: 'woff2' } } } }).app,
+      BASE,
+      NATIVE,
+    );
+    expect(t.token.fontFamily).toBe('"MyBrand"');
+  });
+
+  it('upload source with no url -> no font override', () => {
+    const t = buildThemeConfig(
+      mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: '', name: 'X', format: '' } } } }).app,
+      BASE,
+      NATIVE,
+    );
+    expect(t.token.fontFamily).toBeUndefined();
+  });
+
   it('sanitizes a hand-typed custom family (strips CSS-breakout chars)', () => {
     const t = buildThemeConfig(mergeConfig({ app: { font: { enabled: true, family: '"My Font";}x{' } } }).app, BASE, NATIVE);
     expect(t.token.fontFamily).toBe('"My Font"x');

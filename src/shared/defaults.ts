@@ -46,7 +46,7 @@ export const DEFAULT_APP: AppConfig = {
   // 无衬线 stack so flipping the switch on shows an immediate effect.
   header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark' },
   sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark' },
-  font: { enabled: false, family: FONT_PRESETS[1].value },
+  font: { enabled: false, source: 'system', family: FONT_PRESETS[1].value, upload: { url: '', name: '', format: '' } },
 };
 
 /** Starting values for the 登录页外观 group (independent of app). */

@@ -21,6 +21,17 @@ export function sanitizeFontFamily(family: string): string {
   return s.slice(0, 200);
 }
 
+/** Map a font file URL's extension to an @font-face src `format()` value (''=unknown). */
+export function fontFormatFromUrl(url: string): string {
+  const ext = ((url || '').split('?')[0].split('#')[0].match(/\.([a-z0-9]+)$/i)?.[1] || '').toLowerCase();
+  return { woff2: 'woff2', woff: 'woff', ttf: 'truetype', otf: 'opentype', ttc: 'truetype' }[ext] || '';
+}
+
+/** Make a URL safe to drop inside CSS `url("...")` — strip chars that could close the string/rule. */
+export function sanitizeCssUrl(url: string): string {
+  return (url || '').replace(/["')(;{}<>\\]/g, '').replace(/\s+/g, '').slice(0, 2000);
+}
+
 /** '#ffffff', 0.9 -> 'rgba(255,255,255,0.9)'. Accepts 3/6-digit hex, with or without '#'. */
 export function hexToRgba(hex: string, alpha: number): string {
   let h = (hex || '').replace('#', '');

@@ -101,11 +101,18 @@ export function buildThemeConfig(
   // full-width sider container with the exact configured value instead.
 
   // Global font — a token so it penetrates isolated code-block roots. Independent
-  // of the other sections. Empty family = keep native (already reset above).
-  // Sanitize: the family may be hand-typed (custom option).
-  const fontFamily = sanitizeFontFamily(app.font?.family || '');
-  if (app.font?.enabled && fontFamily) {
-    token.fontFamily = fontFamily;
+  // of the other sections. For an uploaded font the token references the quoted
+  // family name; generateCss injects the matching @font-face (document-global, so
+  // the token's font resolves everywhere including code-block roots).
+  const font = app.font;
+  if (font?.enabled) {
+    if (font.source === 'upload' && font.upload?.url) {
+      const name = sanitizeFontFamily(font.upload.name || '').replace(/["']/g, '');
+      if (name) token.fontFamily = `"${name}"`;
+    } else if (font.source !== 'upload') {
+      const fam = sanitizeFontFamily(font.family || '');
+      if (fam) token.fontFamily = fam;
+    }
   }
 
   return { name: 'ExtraTheme', token, components: { ...KEEP_OPAQUE_COMPONENTS }, cssVar: true };

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgba, buildBackground, sanitizeFontFamily } from '../color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl } from '../color';
 
 describe('hexToRgba', () => {
   it('converts 6-digit hex', () => {
@@ -74,5 +74,25 @@ describe('sanitizeFontFamily', () => {
   });
   it('caps length at 200', () => {
     expect(sanitizeFontFamily('a'.repeat(300)).length).toBe(200);
+  });
+});
+
+describe('fontFormatFromUrl', () => {
+  it('maps common extensions (case + query/hash tolerant)', () => {
+    expect(fontFormatFromUrl('/x/y.woff2')).toBe('woff2');
+    expect(fontFormatFromUrl('http://h/z.WOFF')).toBe('woff');
+    expect(fontFormatFromUrl('/a.ttf?sig=abc')).toBe('truetype');
+    expect(fontFormatFromUrl('/a.otf#frag')).toBe('opentype');
+    expect(fontFormatFromUrl('/a.xyz')).toBe('');
+    expect(fontFormatFromUrl('')).toBe('');
+  });
+});
+
+describe('sanitizeCssUrl', () => {
+  it('keeps a normal signed URL intact', () => {
+    expect(sanitizeCssUrl('http://h/f.woff2?a=1&b=2')).toBe('http://h/f.woff2?a=1&b=2');
+  });
+  it('strips chars that could close url()/the rule', () => {
+    expect(sanitizeCssUrl('http://h/f");}body{x:1')).toBe('http://h/fbodyx:1');
   });
 });

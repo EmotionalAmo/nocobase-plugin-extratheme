@@ -4,6 +4,7 @@ import { useAPIClient, useGlobalTheme, defaultTheme } from '@nocobase/client';
 import type { ExtraThemeConfig, AppConfig } from '../../shared/types';
 import { mergeConfig, DEFAULT_APP } from '../../shared/defaults';
 import { buildThemeConfig } from '../../shared/buildTheme';
+import { fontFormatFromUrl } from '../../shared/color';
 import { AppForm } from './controls';
 import { LivePreview } from './LivePreview';
 import { useT } from '../useT';
@@ -52,6 +53,26 @@ export const SettingsPage: React.FC = () => {
     } catch {
       message.error(t('上传失败'));
       return '';
+    }
+  };
+
+  const uploadFont = async (file: File): Promise<{ url: string; name: string; format: string }> => {
+    const empty = { url: '', name: '', format: '' };
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api.request({ url: 'attachments:create', method: 'post', data: form });
+      let url: string = res?.data?.data?.url || '';
+      if (!url) throw new Error('no url');
+      if (!url.startsWith('http')) url = window.location.origin + url;
+      // family name from the original filename (drop extension); format from the extension.
+      const name = (file.name || 'Custom Font').replace(/\.[^.]+$/, '') || 'Custom Font';
+      const format = fontFormatFromUrl(file.name || url);
+      message.success(t('上传成功'));
+      return { url, name, format };
+    } catch {
+      message.error(t('上传失败'));
+      return empty;
     }
   };
 
@@ -123,7 +144,7 @@ export const SettingsPage: React.FC = () => {
   return (
     <div style={{ padding: 4, maxWidth: 1100 }}>
       {/* form: 工作区外观 / 顶部导航栏 / 侧边导航栏 as three horizontal columns */}
-      <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} />
+      <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} uploadFont={uploadFont} />
 
       <Space style={{ marginTop: 20 }}>
         <Button type="primary" loading={saving} onClick={save}>

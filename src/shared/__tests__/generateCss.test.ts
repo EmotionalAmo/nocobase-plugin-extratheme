@@ -4,88 +4,64 @@ import { mergeConfig } from '../defaults';
 import type { Selectors } from '../types';
 
 const SEL: Selectors = {
-  app: { appRoot: '.ant-layout', header: '.ant-layout-header', sider: '.ant-layout-sider', card: '.ant-card', content: '.ant-layout-content' },
+  app: { appRoot: '.ant-layout', header: '.ant-layout-header', sider: '.ant-layout-sider', card: '.ant-card', content: '.ant-pro-layout-content' },
   login: { loginRoot: '.signin-page', loginCard: '.signin-card' },
 };
 
-describe('generateStylesheet', () => {
+describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
   it('all disabled -> empty', () => {
     expect(generateStylesheet(mergeConfig({}), SEL).trim()).toBe('');
   });
 
-  it('header enabled -> frosted rgba + blur, scoped by body class', () => {
-    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true } } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-layout-header');
-    expect(css).toContain('rgba(255,255,255,0.9)');
-    expect(css).toContain('backdrop-filter:blur(14px)');
-    expect(css).toContain('-webkit-backdrop-filter:blur(14px)');
-  });
-
-  it('header independent of the 工作区外观 switch (app.enabled=false)', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true } } }), SEL);
-    expect(css).toContain('.ant-layout-header'); // header still styled
-    expect(css).not.toContain('linear-gradient'); // no background (工作区外观 off)
-  });
-
-  it('header enabled, sider disabled -> only header', () => {
-    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true }, sider: { enabled: false } } }), SEL);
-    expect(css).toContain('.ant-layout-header');
-    expect(css).not.toContain('.ant-layout-sider');
-  });
-
-  it('sider enabled, header disabled -> only sider', () => {
-    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true }, header: { enabled: false } } }), SEL);
-    expect(css).toContain('.ant-layout-sider');
-    expect(css).not.toContain('.ant-layout-header');
-  });
-
-  it('header solid -> no blur', () => {
-    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'solid' } } }), SEL);
-    expect(css).toContain('.ant-layout-header');
-    expect(css).not.toContain('backdrop-filter:blur(14px)');
-  });
-
-  it('工作区外观 (app.enabled) drives background + cards, not nav', () => {
+  it('工作区外观 on -> body background + content transparent + class-less clear', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-layout{');
-    expect(css).toContain('linear-gradient(135deg,#e0f2fe,#ede9fe)');
-    expect(css).toContain('.ant-card{');
-    expect(css).toContain('.ant-card div:not([class]):not([id])'); // clears nested custom white wrappers
-    expect(css).not.toContain('.ant-layout-header'); // header off by default
+    expect(css).toContain('body.extra-theme-app-on{background:linear-gradient(135deg,#e0f2fe,#ede9fe)');
+    expect(css).toContain('background-attachment:fixed');
+    expect(css).toContain('body.extra-theme-app-on .ant-pro-layout-content{background:transparent!important;}');
+    expect(css).toContain('.ant-card div:not([class]):not([id])');
+  });
+
+  it('does NOT emit surface color rules (those are antd tokens now)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, header: { enabled: true } } }), SEL);
+    expect(css).not.toContain('rgba(255,255,255'); // no colorBgContainer/header color in CSS
+    expect(css).not.toMatch(/\.ant-layout-header\{background:/);
+  });
+
+  it('card glass+blur -> backdrop-filter on .ant-card and .code-block', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, card: { glass: true, blur: 12 } } }), SEL);
+    expect(css).toContain('body.extra-theme-app-on .ant-card,body.extra-theme-app-on .code-block{backdrop-filter:blur(12px);');
+    expect(css).toContain('-webkit-backdrop-filter:blur(12px)');
   });
 
   it('card glass false -> no card blur', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, card: { glass: false } } }), SEL);
-    expect(css).not.toMatch(/\.ant-card\{[^}]*backdrop-filter/);
+    expect(css).not.toContain('backdrop-filter');
   });
 
-  it('login enabled -> card radius + shadow + login bg on loginRoot', () => {
-    const css = generateStylesheet(mergeConfig({ login: { enabled: true } }), SEL);
-    expect(css).toContain('body.extra-theme-login-on .signin-card');
-    expect(css).toContain('border-radius:18px');
-    expect(css).toContain('body.extra-theme-login-on .signin-page');
+  it('header frosted+blur -> backdrop-filter on header, independent of workspace switch', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true, style: 'frosted', blur: 16 } } }), SEL);
+    expect(css).toContain('body.extra-theme-app-on .ant-layout-header{backdrop-filter:blur(16px);');
+    expect(css).not.toContain('background:linear-gradient'); // workspace bg off
   });
 
-  it('dim>0 composites a black layer over the background', () => {
+  it('header solid -> no header blur', () => {
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'solid', blur: 16 } } }), SEL);
+    expect(css).not.toContain('.ant-layout-header{backdrop-filter');
+  });
+
+  it('sider frosted+blur -> backdrop-filter on sider', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
+    expect(css).toContain('body.extra-theme-app-on .ant-layout-sider{backdrop-filter:blur(18px);');
+  });
+
+  it('dim>0 composites a black layer into the body background', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, background: { dim: 40 } as any } }), SEL);
     expect(css).toContain('linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4))');
-  });
-
-  it('dim=0 -> no black layer', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL);
-    expect(css).not.toContain('rgba(0,0,0');
-  });
-
-  it('content selectors are each scoped (comma list)', () => {
-    const sel2 = { ...SEL, app: { ...SEL.app, content: '.a,.b' } };
-    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), sel2);
-    expect(css).toContain('body.extra-theme-app-on .a,body.extra-theme-app-on .b{background:transparent!important;}');
   });
 });
 
 describe('isAppActive', () => {
   it('false when all off', () => expect(isAppActive(mergeConfig({}).app)).toBe(false));
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));
-  it('true when only sider on', () => expect(isAppActive(mergeConfig({ app: { sider: { enabled: true } } }).app)).toBe(true));
   it('true when only 工作区外观 on', () => expect(isAppActive(mergeConfig({ app: { enabled: true } }).app)).toBe(true));
 });

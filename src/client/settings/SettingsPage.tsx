@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, message, Spin } from 'antd';
-import { useAPIClient } from '@nocobase/client';
-import type { ExtraThemeConfig } from '../../shared/types';
+import { useAPIClient, useGlobalTheme, defaultTheme } from '@nocobase/client';
+import type { ExtraThemeConfig, AppConfig } from '../../shared/types';
 import { mergeConfig, DEFAULT_APP } from '../../shared/defaults';
+import { buildThemeConfig } from '../../shared/buildTheme';
 import { AppForm } from './controls';
 import { LivePreview } from './LivePreview';
 import { useT } from '../useT';
 
 const CHANGE_EVENT = 'extra-theme:changed';
+const THEME_UID = 'amo-extratheme';
 
 // NOTE: the 登录页外观 (sign-in) tab is intentionally not exposed yet — the
 // login config/injector plumbing stays in the codebase (dormant, default-off)
@@ -15,6 +17,7 @@ const CHANGE_EVENT = 'extra-theme:changed';
 export const SettingsPage: React.FC = () => {
   const t = useT();
   const api = useAPIClient();
+  const { setTheme, theme } = useGlobalTheme();
   const [cfg, setCfg] = useState<ExtraThemeConfig>(() => mergeConfig({}));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,10 +55,49 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Apply surface colors via the antd theme (penetrates isolated code-block roots):
+   * persist ONE themeConfig record (default:true) + pin the current user to it, then
+   * setTheme() for immediate apply this session. Reloads / other clients pick it up
+   * via NocoBase's InitializeTheme. Silent if plugin-theme-editor is unavailable —
+   * setTheme still gives an immediate in-session result.
+   */
+  const applyTheme = async (app: AppConfig) => {
+    // Spread the CURRENT theme's token (preserves the user's own customizations —
+    // colorPrimary, colorSettings, etc.) — NOT just defaultTheme, or we'd wash them out.
+    const base = (theme as any)?.token || (defaultTheme as any)?.token || {};
+    const built = buildThemeConfig(app, base);
+    try {
+      const list = await api.resource('themeConfig').list({ filter: { uid: THEME_UID }, pageSize: 1 });
+      const existing = list?.data?.data?.[0];
+      let id = existing?.id;
+      if (existing) {
+        await api.resource('themeConfig').update({ filterByTk: id, values: { config: built, default: true, optional: true } });
+      } else {
+        const created = await api.resource('themeConfig').create({
+          values: { config: built, optional: true, isBuiltIn: false, uid: THEME_UID, default: true },
+        });
+        id = created?.data?.data?.id;
+      }
+      if (id != null) await api.resource('users').updateTheme({ values: { themeId: id } });
+    } catch {
+      /* theme-editor off / no perms — fall through to in-session setTheme */
+    }
+    try {
+      setTheme?.(built as any);
+    } catch {
+      /* not inside GlobalThemeProvider (shouldn't happen in /admin) */
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     try {
+      // 1) persist raw settings (drives the bg-image + blur CSS via getPublic)
       await api.request({ url: 'extraTheme:set', method: 'post', data: { scope: 'app', config: cfg.app } });
+      // 2) apply surface colors via the antd theme (tokens reach code-blocks)
+      await applyTheme(cfg.app);
+      // 3) refresh the injected CSS (bg + blur) in this session
       window.dispatchEvent(new Event(CHANGE_EVENT));
       message.success(t('已保存并应用'));
     } catch {

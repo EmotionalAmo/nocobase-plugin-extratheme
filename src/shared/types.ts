@@ -27,6 +27,7 @@ export interface CardConfig {
 }
 
 export interface NavConfig {
+  enabled: boolean; // this nav's styling on/off, independent of the other nav
   style: NavStyle;
   color: string;
   opacity: number; // 0–100 (%)

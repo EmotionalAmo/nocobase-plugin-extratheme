@@ -22,7 +22,7 @@ export const DEFAULT_SELECTORS: Selectors = {
     sider: '.ant-layout-sider',
     card: '.ant-card',
     content:
-      '.ant-pro-layout-content,.ant-pro-layout-container,.ant-layout-content,[class*="nb-subpages-slot"],[class*="nb-subpages-slot"]>div',
+      '.ant-pro-layout-content,.ant-pro-layout-container,.ant-layout-content,.ant-page-header,[class*="nb-subpages-slot"],[class*="nb-subpages-slot"]>div',
   },
   login: {
     loginRoot: '.ant-layout',

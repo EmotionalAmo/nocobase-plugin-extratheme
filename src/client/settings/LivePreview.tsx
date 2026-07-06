@@ -61,7 +61,7 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
             padding: '0 14px',
             fontWeight: 700,
             fontSize: 13,
-            ...(app.enabled ? navStyle(app.header) : { background: '#fff', color: '#1f2733' }),
+            ...(app.enabled && app.header.enabled ? navStyle(app.header) : { background: '#fff', color: '#1f2733' }),
           }}
         >
           NocoBase
@@ -81,7 +81,7 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
               flexDirection: 'column',
               gap: 8,
               fontSize: 12,
-              ...(app.enabled ? navStyle(app.sider) : { background: '#fff', color: '#1f2733' }),
+              ...(app.enabled && app.sider.enabled ? navStyle(app.sider) : { background: '#fff', color: '#1f2733' }),
             }}
           >
             <div style={{ fontWeight: 700 }}>{t('菜单')}</div>

@@ -21,6 +21,18 @@ describe('generateStylesheet', () => {
     expect(css).toContain('-webkit-backdrop-filter:blur(14px)');
   });
 
+  it('header.enabled false -> no header rule; sider still styled', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, header: { enabled: false } } }), SEL);
+    expect(css).not.toContain('.ant-layout-header');
+    expect(css).toContain('.ant-layout-sider');
+  });
+
+  it('sider.enabled false -> no sider rule; header still styled', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, sider: { enabled: false } } }), SEL);
+    expect(css).not.toContain('.ant-layout-sider');
+    expect(css).toContain('.ant-layout-header');
+  });
+
   it('header solid -> no blur', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, header: { style: 'solid' } } }), SEL);
     expect(css).toContain('.ant-layout-header');

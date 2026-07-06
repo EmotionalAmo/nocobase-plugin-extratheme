@@ -76,27 +76,23 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: 4 }}>
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* form */}
-        <div style={{ flex: '1 1 420px', minWidth: 360, maxWidth: 560 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>{t('工作区外观')}</div>
-          <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} />
-          <Space style={{ marginTop: 16 }}>
-            <Button type="primary" loading={saving} onClick={save}>
-              {t('保存并应用')}
-            </Button>
-            <Button onClick={reset}>{t('重置本组')}</Button>
-          </Space>
-        </div>
+    <div style={{ padding: 4, maxWidth: 1100 }}>
+      {/* form: 工作区外观 / 顶部导航栏 / 侧边导航栏 as three horizontal columns */}
+      <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} />
 
-        {/* live preview (sticky) */}
-        <div style={{ flex: '1 1 380px', minWidth: 340, position: 'sticky', top: 16 }}>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>{t('实时预览')}</div>
-          <LivePreview scope="app" app={cfg.app} login={cfg.login} />
-          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 10, lineHeight: 1.6 }}>
-            {t('提示：默认关闭，开启总开关并保存后才生效；关闭插件或关闭开关立即恢复原生外观。')}
-          </div>
+      <Space style={{ marginTop: 20 }}>
+        <Button type="primary" loading={saving} onClick={save}>
+          {t('保存并应用')}
+        </Button>
+        <Button onClick={reset}>{t('重置本组')}</Button>
+      </Space>
+
+      {/* live preview below, full width */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>{t('实时预览')}</div>
+        <LivePreview scope="app" app={cfg.app} login={cfg.login} />
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 10, lineHeight: 1.6 }}>
+          {t('提示：默认关闭，开启总开关并保存后才生效；关闭插件或关闭开关立即恢复原生外观。')}
         </div>
       </div>
     </div>

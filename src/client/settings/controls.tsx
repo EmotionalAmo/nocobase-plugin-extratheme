@@ -1,49 +1,77 @@
 import React from 'react';
-import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button, Space } from 'antd';
+import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload } from 'antd';
 import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard } from '../../shared/types';
 import { GRADIENT_PRESETS } from '../../shared/defaults';
 import { useT } from '../useT';
 
-/** labelled row */
-const Row: React.FC<{ label: string; extra?: React.ReactNode; children: React.ReactNode }> = ({ label, extra, children }) => (
+const ACCENT = '#6d5ae6';
+
+function hex(c: any): string {
+  return typeof c === 'string' ? c : c?.toHexString?.() || '#ffffff';
+}
+
+/** one labelled control row */
+const Row: React.FC<{ label: string; value?: React.ReactNode; children: React.ReactNode }> = ({ label, value, children }) => (
   <div style={{ marginBottom: 14 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-      <span style={{ fontSize: 13, color: '#334155' }}>{label}</span>
-      {extra}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+      <span style={{ fontSize: 12.5, color: '#475569' }}>{label}</span>
+      {value != null && <span style={{ fontSize: 12, fontWeight: 600, color: ACCENT, fontVariantNumeric: 'tabular-nums' }}>{value}</span>}
     </div>
     {children}
   </div>
 );
 
-const Section: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
-  <div style={{ padding: '14px 0', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-      <b style={{ fontSize: 13.5 }}>{title}</b>
+/** a titled sub-group inside a panel */
+const Group: React.FC<{ title?: string; right?: React.ReactNode; children: React.ReactNode; first?: boolean }> = ({ title, right, children, first }) => (
+  <div style={{ marginTop: first ? 0 : 18, paddingTop: first ? 0 : 16, borderTop: first ? 'none' : '1px solid rgba(0,0,0,0.05)' }}>
+    {title && (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a' }}>{title}</span>
+        {right}
+      </div>
+    )}
+    {children}
+  </div>
+);
+
+/** a column card */
+const Panel: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
+  <div
+    style={{
+      flex: '1 1 300px',
+      minWidth: 280,
+      background: '#fff',
+      borderRadius: 14,
+      border: '1px solid rgba(15,23,42,0.08)',
+      boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+      padding: '16px 20px 20px',
+      alignSelf: 'stretch',
+    }}
+  >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 13, borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
+      <b style={{ fontSize: 14, letterSpacing: 0.2, color: '#0f172a' }}>{title}</b>
       {right}
     </div>
     {children}
   </div>
 );
 
-function hex(c: any): string {
-  return typeof c === 'string' ? c : c?.toHexString?.() || '#ffffff';
-}
+const dimStyle = (enabled: boolean): React.CSSProperties =>
+  enabled ? {} : { opacity: 0.4, pointerEvents: 'none', filter: 'grayscale(0.4)' };
 
-const BackgroundSection: React.FC<{
-  bg: BackgroundConfig;
-  onChange: (b: BackgroundConfig) => void;
-  uploadImage?: (file: File) => Promise<string>;
-  loginHint?: boolean;
-}> = ({ bg, onChange, uploadImage, loginHint }) => {
+// ---- control groups (unwrapped; caller places them in Panels) ----
+
+const BackgroundGroup: React.FC<{ bg: BackgroundConfig; onChange: (b: BackgroundConfig) => void; uploadImage?: (f: File) => Promise<string>; first?: boolean }> = ({ bg, onChange, uploadImage, first }) => {
   const t = useT();
   const set = (p: Partial<BackgroundConfig>) => onChange({ ...bg, ...p });
   const presetNames = Object.keys(GRADIENT_PRESETS);
   const isCustom = !presetNames.includes(bg.gradient.preset);
   return (
-    <Section title={t('背景')}>
+    <Group title={t('背景')} first={first}>
       <Row label={t('类型')}>
         <Segmented
           block
+          size="small"
           value={bg.type}
           onChange={(v) => set({ type: v as any })}
           options={[
@@ -53,13 +81,11 @@ const BackgroundSection: React.FC<{
           ]}
         />
       </Row>
-
       {bg.type === 'color' && (
         <Row label={t('背景颜色')}>
           <ColorPicker value={bg.color} onChangeComplete={(c) => set({ color: hex(c) })} showText />
         </Row>
       )}
-
       {bg.type === 'gradient' && (
         <>
           <Row label={t('渐变预设')}>
@@ -73,29 +99,22 @@ const BackgroundSection: React.FC<{
               options={[...presetNames.map((n) => ({ label: n, value: n })), { label: t('自定义'), value: '__custom__' }]}
             />
           </Row>
-          <Row label={t('角度')} extra={<span style={{ color: '#6d5ae6' }}>{bg.gradient.angle}°</span>}>
+          <Row label={t('角度')} value={`${bg.gradient.angle}°`}>
             <Slider min={0} max={360} value={bg.gradient.angle} onChange={(v) => set({ gradient: { ...bg.gradient, angle: v } })} />
           </Row>
           {isCustom && (
             <Row label={t('自定义色标')}>
-              <Space>
-                <ColorPicker
-                  value={bg.gradient.colors[0] || '#ffffff'}
-                  onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [hex(c), bg.gradient.colors[1] || '#ffffff'] } })}
-                />
-                <ColorPicker
-                  value={bg.gradient.colors[1] || '#ffffff'}
-                  onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [bg.gradient.colors[0] || '#ffffff', hex(c)] } })}
-                />
-              </Space>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <ColorPicker value={bg.gradient.colors[0] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [hex(c), bg.gradient.colors[1] || '#ffffff'] } })} />
+                <ColorPicker value={bg.gradient.colors[1] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [bg.gradient.colors[0] || '#ffffff', hex(c)] } })} />
+              </div>
             </Row>
           )}
         </>
       )}
-
       {bg.type === 'image' && (
         <>
-          <Row label={t('图片 URL')} extra={loginHint ? <span style={{ fontSize: 11, color: '#f59e0b' }}>{t('需公网可读')}</span> : null}>
+          <Row label={t('图片 URL')}>
             <Input
               value={bg.image.url}
               placeholder="https://…"
@@ -119,6 +138,7 @@ const BackgroundSection: React.FC<{
           <Row label={t('铺法')}>
             <Segmented
               block
+              size="small"
               value={bg.image.fit}
               onChange={(v) => set({ image: { ...bg.image, fit: v as any } })}
               options={[
@@ -130,40 +150,41 @@ const BackgroundSection: React.FC<{
           </Row>
         </>
       )}
-
-      <Row label={t('暗化遮罩')} extra={<span style={{ color: '#6d5ae6' }}>{bg.dim}%</span>}>
+      <Row label={t('暗化遮罩')} value={`${bg.dim}%`}>
         <Slider min={0} max={80} value={bg.dim} onChange={(v) => set({ dim: v })} />
       </Row>
-    </Section>
+    </Group>
   );
 };
 
-const CardSection: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void }> = ({ card, onChange }) => {
+const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void }> = ({ card, onChange }) => {
   const t = useT();
   const set = (p: Partial<CardConfig>) => onChange({ ...card, ...p });
   return (
-    <Section title={t('内容区卡片')} right={<Switch checked={card.glass} onChange={(v) => set({ glass: v })} />}>
-      <Row label={t('卡片不透明度')} extra={<span style={{ color: '#6d5ae6' }}>{card.opacity}%</span>}>
+    <Group title={t('内容区卡片')} right={<Switch size="small" checked={card.glass} onChange={(v) => set({ glass: v })} />}>
+      <Row label={t('卡片不透明度')} value={`${card.opacity}%`}>
         <Slider min={10} max={100} value={card.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
-      <Row label={t('背景模糊')} extra={<span style={{ color: '#6d5ae6' }}>{card.blur}px</span>}>
+      <Row label={t('背景模糊')} value={`${card.blur}px`}>
         <Slider min={0} max={40} value={card.blur} onChange={(v) => set({ blur: v })} />
       </Row>
-      <Row label={t('浅色描边')}>
-        <Switch checked={card.border} onChange={(v) => set({ border: v })} />
-      </Row>
-    </Section>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12.5, color: '#475569' }}>{t('浅色描边')}</span>
+        <Switch size="small" checked={card.border} onChange={(v) => set({ border: v })} />
+      </div>
+    </Group>
   );
 };
 
-const NavSection: React.FC<{ title: string; nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ title, nav, onChange }) => {
+const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
   const t = useT();
   const set = (p: Partial<NavConfig>) => onChange({ ...nav, ...p });
   return (
-    <Section title={title}>
+    <Group first>
       <Row label={t('风格')}>
         <Segmented
           block
+          size="small"
           value={nav.style}
           onChange={(v) => set({ style: v as any })}
           options={[
@@ -175,15 +196,16 @@ const NavSection: React.FC<{ title: string; nav: NavConfig; onChange: (n: NavCon
       <Row label={t('背景颜色')}>
         <ColorPicker value={nav.color} onChangeComplete={(c) => set({ color: hex(c) })} showText />
       </Row>
-      <Row label={t('不透明度')} extra={<span style={{ color: '#6d5ae6' }}>{nav.opacity}%</span>}>
+      <Row label={t('不透明度')} value={`${nav.opacity}%`}>
         <Slider min={0} max={100} value={nav.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
-      <Row label={t('背景模糊')} extra={<span style={{ color: '#6d5ae6' }}>{nav.blur}px</span>}>
+      <Row label={t('背景模糊')} value={`${nav.blur}px`}>
         <Slider min={0} max={40} value={nav.blur} disabled={nav.style !== 'frosted'} onChange={(v) => set({ blur: v })} />
       </Row>
       <Row label={t('文字颜色')}>
         <Segmented
           block
+          size="small"
           value={nav.text}
           onChange={(v) => set({ text: v as any })}
           options={[
@@ -192,57 +214,79 @@ const NavSection: React.FC<{ title: string; nav: NavConfig; onChange: (n: NavCon
           ]}
         />
       </Row>
-    </Section>
+    </Group>
   );
 };
 
-const LoginCardSection: React.FC<{ card: LoginCard; onChange: (c: LoginCard) => void }> = ({ card, onChange }) => {
+const LoginCardGroup: React.FC<{ card: LoginCard; onChange: (c: LoginCard) => void }> = ({ card, onChange }) => {
   const t = useT();
   const set = (p: Partial<LoginCard>) => onChange({ ...card, ...p });
   return (
-    <Section title={t('登录卡片')} right={<Switch checked={card.glass} onChange={(v) => set({ glass: v })} />}>
-      <Row label={t('卡片不透明度')} extra={<span style={{ color: '#6d5ae6' }}>{card.opacity}%</span>}>
+    <Group title={t('登录卡片')} right={<Switch size="small" checked={card.glass} onChange={(v) => set({ glass: v })} />}>
+      <Row label={t('卡片不透明度')} value={`${card.opacity}%`}>
         <Slider min={10} max={100} value={card.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
-      <Row label={t('背景模糊')} extra={<span style={{ color: '#6d5ae6' }}>{card.blur}px</span>}>
+      <Row label={t('背景模糊')} value={`${card.blur}px`}>
         <Slider min={0} max={40} value={card.blur} onChange={(v) => set({ blur: v })} />
       </Row>
-      <Row label={t('圆角')} extra={<span style={{ color: '#6d5ae6' }}>{card.radius}px</span>}>
+      <Row label={t('圆角')} value={`${card.radius}px`}>
         <Slider min={0} max={32} value={card.radius} onChange={(v) => set({ radius: v })} />
       </Row>
-      <Row label={t('投影')}>
-        <Switch checked={card.shadow} onChange={(v) => set({ shadow: v })} />
-      </Row>
-    </Section>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12.5, color: '#475569' }}>{t('投影')}</span>
+        <Switch size="small" checked={card.shadow} onChange={(v) => set({ shadow: v })} />
+      </div>
+    </Group>
   );
 };
+
+// ---- public forms ----
 
 export const AppForm: React.FC<{ app: AppConfig; onChange: (a: AppConfig) => void; uploadImage?: (f: File) => Promise<string> }> = ({ app, onChange, uploadImage }) => {
   const t = useT();
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 4 }}>
-        <b style={{ fontSize: 14 }}>{t('总开关')}</b>
-        <Switch checked={app.enabled} onChange={(v) => onChange({ ...app, enabled: v })} />
-      </div>
-      <BackgroundSection bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
-      <CardSection card={app.card} onChange={(card) => onChange({ ...app, card })} />
-      <NavSection title={t('顶部导航栏')} nav={app.header} onChange={(header) => onChange({ ...app, header })} />
-      <NavSection title={t('侧边导航栏')} nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
+    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <Panel title={t('工作区外观')} right={<Switch checked={app.enabled} onChange={(v) => onChange({ ...app, enabled: v })} />}>
+        <div style={dimStyle(app.enabled)}>
+          <BackgroundGroup first bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
+          <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
+        </div>
+      </Panel>
+      <Panel
+        title={t('顶部导航栏')}
+        right={<Switch checked={app.header.enabled} disabled={!app.enabled} onChange={(v) => onChange({ ...app, header: { ...app.header, enabled: v } })} />}
+      >
+        <div style={dimStyle(app.enabled && app.header.enabled)}>
+          <NavGroup nav={app.header} onChange={(header) => onChange({ ...app, header })} />
+        </div>
+      </Panel>
+      <Panel
+        title={t('侧边导航栏')}
+        right={<Switch checked={app.sider.enabled} disabled={!app.enabled} onChange={(v) => onChange({ ...app, sider: { ...app.sider, enabled: v } })} />}
+      >
+        <div style={dimStyle(app.enabled && app.sider.enabled)}>
+          <NavGroup nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
+        </div>
+      </Panel>
     </div>
   );
 };
 
 export const LoginForm: React.FC<{ login: LoginConfig; onChange: (l: LoginConfig) => void; uploadImage?: (f: File) => Promise<string> }> = ({ login, onChange, uploadImage }) => {
   const t = useT();
+  const dim = dimStyle(login.enabled);
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 4 }}>
-        <b style={{ fontSize: 14 }}>{t('总开关')}</b>
-        <Switch checked={login.enabled} onChange={(v) => onChange({ ...login, enabled: v })} />
-      </div>
-      <BackgroundSection bg={login.background} onChange={(background) => onChange({ ...login, background })} uploadImage={uploadImage} loginHint />
-      <LoginCardSection card={login.card} onChange={(card) => onChange({ ...login, card })} />
+    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <Panel title={t('登录页外观')} right={<Switch checked={login.enabled} onChange={(v) => onChange({ ...login, enabled: v })} />}>
+        <div style={dim}>
+          <BackgroundGroup first bg={login.background} onChange={(background) => onChange({ ...login, background })} uploadImage={uploadImage} />
+        </div>
+      </Panel>
+      <Panel title={t('登录卡片')}>
+        <div style={dim}>
+          <LoginCardGroup card={login.card} onChange={(card) => onChange({ ...login, card })} />
+        </div>
+      </Panel>
     </div>
   );
 };

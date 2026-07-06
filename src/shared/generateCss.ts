@@ -43,9 +43,9 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   // Background on the layout root; content layers transparent so it shows through.
   out.push(`${scopedList(scope, s.appRoot)}{${bgDecl(app.background)}}`);
   out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);
-  // Top / side nav.
-  out.push(navRule(scope, s.header, app.header));
-  out.push(navRule(scope, s.sider, app.sider));
+  // Top / side nav — each independently toggleable.
+  if (app.header.enabled) out.push(navRule(scope, s.header, app.header));
+  if (app.sider.enabled) out.push(navRule(scope, s.sider, app.sider));
   // Content cards.
   const cardBg = hexToRgba('#ffffff', app.card.opacity / 100);
   const cardBlur =

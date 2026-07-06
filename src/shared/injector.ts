@@ -9,7 +9,7 @@
  * Uses only browser globals (document/window/localStorage) — the NocoBase
  * server build never imports this file, so it stays out of the server bundle.
  */
-import { generateStylesheet } from './generateCss';
+import { generateStylesheet, isAppActive } from './generateCss';
 import { mergeConfig } from './defaults';
 import type { Selectors, ExtraThemeConfig } from './types';
 
@@ -55,7 +55,7 @@ export class ThemeInjector {
   apply(cfg: ExtraThemeConfig): void {
     const body = document.body;
     if (!body) return;
-    body.classList.toggle('extra-theme-app-on', !!cfg.app?.enabled);
+    body.classList.toggle('extra-theme-app-on', isAppActive(cfg.app));
     body.classList.toggle('extra-theme-login-on', !!cfg.login?.enabled);
     let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
     if (!el) {

@@ -26,8 +26,10 @@ export const DEFAULT_APP: AppConfig = {
     dim: 0,
   },
   card: { glass: true, opacity: 72, blur: 12, border: true },
-  header: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark' },
-  sider: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark' },
+  // header / sider are independent of the 工作区外观 (background+card) switch;
+  // all three default OFF so a fresh install changes nothing.
+  header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark' },
+  sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark' },
 };
 
 /** Starting values for the 登录页外观 group (independent of app). */

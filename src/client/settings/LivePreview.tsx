@@ -39,17 +39,19 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
 }) => {
   const t = useT();
   if (scope === 'app') {
-    const cardStyle: React.CSSProperties = {
-      flex: 1,
-      borderRadius: 10,
-      padding: 12,
-      background: hexToRgba('#ffffff', app.card.opacity / 100),
-      backdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
-      WebkitBackdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
-      border: app.card.border ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
-      color: '#1f2733',
-      fontSize: 12,
-    };
+    const cardStyle: React.CSSProperties = app.enabled
+      ? {
+          flex: 1,
+          borderRadius: 10,
+          padding: 12,
+          background: hexToRgba('#ffffff', app.card.opacity / 100),
+          backdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
+          WebkitBackdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
+          border: app.card.border ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
+          color: '#1f2733',
+          fontSize: 12,
+        }
+      : { flex: 1, borderRadius: 10, padding: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', color: '#1f2733', fontSize: 12 };
     return (
       <div style={{ ...box, ...(app.enabled ? bgStyle(app.background) : { background: '#f0f2f5' }) }}>
         {/* header */}
@@ -61,7 +63,7 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
             padding: '0 14px',
             fontWeight: 700,
             fontSize: 13,
-            ...(app.enabled && app.header.enabled ? navStyle(app.header) : { background: '#fff', color: '#1f2733' }),
+            ...(app.header.enabled ? navStyle(app.header) : { background: '#fff', color: '#1f2733' }),
           }}
         >
           NocoBase
@@ -81,7 +83,7 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
               flexDirection: 'column',
               gap: 8,
               fontSize: 12,
-              ...(app.enabled && app.sider.enabled ? navStyle(app.sider) : { background: '#fff', color: '#1f2733' }),
+              ...(app.sider.enabled ? navStyle(app.sider) : { background: '#fff', color: '#1f2733' }),
             }}
           >
             <div style={{ fontWeight: 700 }}>{t('菜单')}</div>

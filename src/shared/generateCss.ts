@@ -33,28 +33,37 @@ function navRule(scope: string, sel: string, nav: NavConfig): string {
     nav.style === 'frosted' && nav.blur > 0
       ? `backdrop-filter:blur(${nav.blur}px);-webkit-backdrop-filter:blur(${nav.blur}px);`
       : '';
-  return `${scopedList(scope, sel)}{background:${bg}!important;${blur}color:${fg};}`;
+  const base = `${scopedList(scope, sel)}{background:${bg}!important;${blur}color:${fg};}`;
+  // The menu (and its sub-menus) inside a nav paints its OWN opaque background,
+  // which would hide the nav's translucency — clear it so the frosting shows.
+  const inner = `${scopedList(scope, sel + ' .ant-menu')},${scopedList(scope, sel + ' .ant-menu-sub')}{background:transparent!important;color:${fg};}`;
+  return `${base}\n${inner}`;
 }
 
 function appCss(app: AppConfig, s: Selectors['app']): string {
-  if (!app.enabled) return '';
   const scope = 'body.extra-theme-app-on';
   const out: string[] = [];
-  // Background on the layout root; content layers transparent so it shows through.
-  out.push(`${scopedList(scope, s.appRoot)}{${bgDecl(app.background)}}`);
-  out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);
-  // Top / side nav — each independently toggleable.
+  // 工作区外观 = background + content cards (independent of header/sider).
+  if (app.enabled) {
+    out.push(`${scopedList(scope, s.appRoot)}{${bgDecl(app.background)}}`);
+    out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);
+    const cardBg = hexToRgba('#ffffff', app.card.opacity / 100);
+    const cardBlur =
+      app.card.glass && app.card.blur > 0
+        ? `backdrop-filter:blur(${app.card.blur}px);-webkit-backdrop-filter:blur(${app.card.blur}px);`
+        : '';
+    const cardBorder = app.card.border ? 'border:1px solid rgba(255,255,255,0.5);' : '';
+    out.push(`${scopedList(scope, s.card)}{background:${cardBg}!important;${cardBlur}${cardBorder}}`);
+  }
+  // Top / side nav — each independently toggleable, no dependency on the above.
   if (app.header.enabled) out.push(navRule(scope, s.header, app.header));
   if (app.sider.enabled) out.push(navRule(scope, s.sider, app.sider));
-  // Content cards.
-  const cardBg = hexToRgba('#ffffff', app.card.opacity / 100);
-  const cardBlur =
-    app.card.glass && app.card.blur > 0
-      ? `backdrop-filter:blur(${app.card.blur}px);-webkit-backdrop-filter:blur(${app.card.blur}px);`
-      : '';
-  const cardBorder = app.card.border ? 'border:1px solid rgba(255,255,255,0.5);' : '';
-  out.push(`${scopedList(scope, s.card)}{background:${cardBg}!important;${cardBlur}${cardBorder}}`);
   return out.join('\n');
+}
+
+/** True when any app-scope section (background/card, header, or sider) is on. */
+export function isAppActive(app: AppConfig): boolean {
+  return !!(app.enabled || app.header.enabled || app.sider.enabled);
 }
 
 function loginCss(login: LoginConfig, s: Selectors['login']): string {

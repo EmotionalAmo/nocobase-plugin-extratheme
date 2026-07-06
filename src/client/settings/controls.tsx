@@ -83,7 +83,7 @@ const BackgroundGroup: React.FC<{ bg: BackgroundConfig; onChange: (b: Background
       </Row>
       {bg.type === 'color' && (
         <Row label={t('背景颜色')}>
-          <ColorPicker value={bg.color} onChangeComplete={(c) => set({ color: hex(c) })} showText />
+          <ColorPicker value={bg.color} onChangeComplete={(c) => set({ color: hex(c) })} showText disabledAlpha />
         </Row>
       )}
       {bg.type === 'gradient' && (
@@ -105,8 +105,8 @@ const BackgroundGroup: React.FC<{ bg: BackgroundConfig; onChange: (b: Background
           {isCustom && (
             <Row label={t('自定义色标')}>
               <div style={{ display: 'flex', gap: 8 }}>
-                <ColorPicker value={bg.gradient.colors[0] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [hex(c), bg.gradient.colors[1] || '#ffffff'] } })} />
-                <ColorPicker value={bg.gradient.colors[1] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [bg.gradient.colors[0] || '#ffffff', hex(c)] } })} />
+                <ColorPicker disabledAlpha value={bg.gradient.colors[0] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [hex(c), bg.gradient.colors[1] || '#ffffff'] } })} />
+                <ColorPicker disabledAlpha value={bg.gradient.colors[1] || '#ffffff'} onChangeComplete={(c) => set({ gradient: { ...bg.gradient, colors: [bg.gradient.colors[0] || '#ffffff', hex(c)] } })} />
               </div>
             </Row>
           )}
@@ -194,7 +194,7 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
         />
       </Row>
       <Row label={t('背景颜色')}>
-        <ColorPicker value={nav.color} onChangeComplete={(c) => set({ color: hex(c) })} showText />
+        <ColorPicker value={nav.color} onChangeComplete={(c) => set({ color: hex(c) })} showText disabledAlpha />
       </Row>
       <Row label={t('不透明度')} value={`${nav.opacity}%`}>
         <Slider min={0} max={100} value={nav.opacity} onChange={(v) => set({ opacity: v })} />
@@ -254,17 +254,17 @@ export const AppForm: React.FC<{ app: AppConfig; onChange: (a: AppConfig) => voi
       </Panel>
       <Panel
         title={t('顶部导航栏')}
-        right={<Switch checked={app.header.enabled} disabled={!app.enabled} onChange={(v) => onChange({ ...app, header: { ...app.header, enabled: v } })} />}
+        right={<Switch checked={app.header.enabled} onChange={(v) => onChange({ ...app, header: { ...app.header, enabled: v } })} />}
       >
-        <div style={dimStyle(app.enabled && app.header.enabled)}>
+        <div style={dimStyle(app.header.enabled)}>
           <NavGroup nav={app.header} onChange={(header) => onChange({ ...app, header })} />
         </div>
       </Panel>
       <Panel
         title={t('侧边导航栏')}
-        right={<Switch checked={app.sider.enabled} disabled={!app.enabled} onChange={(v) => onChange({ ...app, sider: { ...app.sider, enabled: v } })} />}
+        right={<Switch checked={app.sider.enabled} onChange={(v) => onChange({ ...app, sider: { ...app.sider, enabled: v } })} />}
       >
-        <div style={dimStyle(app.enabled && app.sider.enabled)}>
+        <div style={dimStyle(app.sider.enabled)}>
           <NavGroup nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
         </div>
       </Panel>

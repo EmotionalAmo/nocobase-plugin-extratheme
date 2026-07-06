@@ -1,0 +1,79 @@
+/**
+ * ExtraTheme config types — shared by server (defaults/seed), legacy client and
+ * modern client-v2. Two logical config groups: `app` (工作区外观, applies to
+ * /admin + /v) and `login` (登录页外观, independent). Everything is a plain
+ * JSON-serialisable object so it round-trips through the `extraThemeSettings`
+ * collection and the public `extraTheme:getPublic` action.
+ */
+
+export type BgType = 'none' | 'color' | 'gradient' | 'image';
+export type NavStyle = 'solid' | 'frosted';
+export type TextTone = 'dark' | 'light';
+export type BgFit = 'cover' | 'contain' | 'repeat';
+
+export interface BackgroundConfig {
+  type: BgType;
+  color: string;
+  gradient: { preset: string; angle: number; colors: string[] };
+  image: { url: string; fit: BgFit; position: string };
+  dim: number; // 暗化遮罩 0–80 (%)
+}
+
+export interface CardConfig {
+  glass: boolean;
+  opacity: number; // 10–100 (%)
+  blur: number; // 0–40 (px)
+  border: boolean;
+}
+
+export interface NavConfig {
+  style: NavStyle;
+  color: string;
+  opacity: number; // 0–100 (%)
+  blur: number; // 0–40 (px)
+  text: TextTone;
+}
+
+export interface AppConfig {
+  enabled: boolean;
+  background: BackgroundConfig;
+  card: CardConfig;
+  header: NavConfig;
+  sider: NavConfig;
+}
+
+export interface LoginCard {
+  glass: boolean;
+  opacity: number; // 10–100 (%)
+  blur: number; // 0–40 (px)
+  radius: number; // 0–32 (px)
+  shadow: boolean;
+}
+
+export interface LoginConfig {
+  enabled: boolean;
+  background: BackgroundConfig;
+  card: LoginCard;
+}
+
+export interface ExtraThemeConfig {
+  app: AppConfig;
+  login: LoginConfig;
+}
+
+/** DOM anchors — each client lane passes its own (pinned against the live DOM). */
+export interface AppSelectors {
+  appRoot: string;
+  header: string;
+  sider: string;
+  card: string;
+  content: string;
+}
+export interface LoginSelectors {
+  loginRoot: string;
+  loginCard: string;
+}
+export interface Selectors {
+  app: AppSelectors;
+  login: LoginSelectors;
+}

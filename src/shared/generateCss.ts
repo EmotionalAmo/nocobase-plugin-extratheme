@@ -49,6 +49,10 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   if (app.enabled) {
     // Page background on <body> (paints above the transformed layout wrapper).
     out.push(`${scope}{${bgDecl(app.background)}}`);
+    // pro-layout offsets the FIXED sider by ~2x header height (top:92) though only
+    // one 46px header row is visible → a 46px gap the page bg now reveals between
+    // the header and the sider. Pull the sider up to the header's bottom.
+    out.push(`${scope} .ant-layout-sider-children{top:46px!important;}`);
     // Make content wrappers + class-less/inline-white block wrappers transparent so
     // the (token-translucent) surfaces and the page background show through.
     out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);

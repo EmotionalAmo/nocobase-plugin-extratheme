@@ -242,6 +242,9 @@ const FontGroup: React.FC<{ font: FontConfig; onChange: (f: FontConfig) => void 
         <div style={{ fontSize: 19, fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>{t('字体预览')} Aa 永和</div>
         <div style={{ fontSize: 13, color: '#475569', marginTop: 5 }}>中文示例文本 · The quick brown fox · 0123456789</div>
       </div>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8, lineHeight: 1.6 }}>
+        {t('提示：字体需系统已安装才生效；“无衬线/系统默认”通常与本机默认字体一致，选“楷体/宋体”等可看到明显变化。')}
+      </div>
     </Group>
   );
 };

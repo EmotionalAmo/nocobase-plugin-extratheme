@@ -49,12 +49,14 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   if (app.enabled) {
     // Page background on <body> (paints above the transformed layout wrapper).
     out.push(`${scope}{${bgDecl(app.background)}}`);
-    // The FIXED sider renders 46px too low (a phantom extra header row): its
-    // containing block already starts at the header's bottom, yet its default
-    // top:46px pushes it down again, leaving a 46px gap the page bg reveals.
-    // top:0 pins it flush to the containing-block top (= header bottom) — robust
-    // to header height since it's relative, not absolute. (top:46 was a no-op.)
-    out.push(`${scope} .ant-layout-sider-children{top:0!important;}`);
+    // The FIXED sider (height: calc(100vh - headerH)) must sit flush under the
+    // header. Its `top` can't be hardcoded: the containing block differs by layout
+    // — the main workspace nests it below the header (top:46→46px gap at the top),
+    // the settings layout anchors it at the viewport top (top:0→46px empty at the
+    // BOTTOM). Both containing blocks END at the viewport bottom, so anchor by the
+    // bottom instead: top:auto + bottom:0 lands the top at the header's bottom in
+    // BOTH layouts (top must be auto so bottom+height win over the native top).
+    out.push(`${scope} .ant-layout-sider-children{top:auto!important;bottom:0!important;}`);
     // Make content wrappers + class-less/inline-white block wrappers transparent so
     // the (token-translucent) surfaces and the page background show through.
     out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);

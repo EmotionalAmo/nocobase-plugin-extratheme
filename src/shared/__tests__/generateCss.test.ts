@@ -19,7 +19,7 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('background-attachment:fixed');
     expect(css).toContain('body.extra-theme-app-on .ant-pro-layout-content{background:transparent!important;}');
     expect(css).toContain('.ant-card div:not([class]):not([id])');
-    expect(css).toContain('.ant-layout-sider-children{top:0!important;}');
+    expect(css).toContain('.ant-layout-sider-children{top:auto!important;bottom:0!important;}');
   });
 
   it('does NOT emit surface color rules (those are antd tokens now)', () => {

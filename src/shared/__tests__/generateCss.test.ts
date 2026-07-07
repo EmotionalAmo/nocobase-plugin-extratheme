@@ -101,12 +101,18 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4))');
   });
 
-  it('scrollbar always -> emits always-visible ::-webkit-scrollbar; scrolling -> none', () => {
-    const always = generateStylesheet(mergeConfig({ app: { scrollbar: { mode: 'always' } } }), SEL);
+  it('scrollbar enabled+always -> always-visible bar; enabled+hidden -> hidden; disabled -> none', () => {
+    const always = generateStylesheet(mergeConfig({ app: { scrollbar: { enabled: true, mode: 'always' } } }), SEL);
     expect(always).toContain('::-webkit-scrollbar,body.extra-theme-app-on::-webkit-scrollbar{width:10px');
     expect(always).toContain('::-webkit-scrollbar-thumb');
-    const scrolling = generateStylesheet(mergeConfig({ app: { scrollbar: { mode: 'scrolling' } } }), SEL);
-    expect(scrolling).not.toContain('::-webkit-scrollbar{width:10px');
+
+    const hidden = generateStylesheet(mergeConfig({ app: { scrollbar: { enabled: true, mode: 'hidden' } } }), SEL);
+    expect(hidden).toContain('::-webkit-scrollbar,body.extra-theme-app-on::-webkit-scrollbar{display:none');
+    expect(hidden).toContain('scrollbar-width:none');
+    expect(hidden).not.toContain('width:10px');
+
+    const off = generateStylesheet(mergeConfig({ app: { scrollbar: { enabled: false, mode: 'always' } } }), SEL);
+    expect(off).not.toContain('::-webkit-scrollbar,body.extra-theme-app-on::-webkit-scrollbar');
   });
 
   it('font on -> font-family on body scope; off/empty -> none', () => {
@@ -156,6 +162,6 @@ describe('isAppActive', () => {
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));
   it('true when only 工作区外观 on', () => expect(isAppActive(mergeConfig({ app: { enabled: true } }).app)).toBe(true));
   it('true when only font on', () => expect(isAppActive(mergeConfig({ app: { font: { enabled: true } } }).app)).toBe(true));
-  it('true when scrollbar=always', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { mode: 'always' } } }).app)).toBe(true));
-  it('false when scrollbar=scrolling and rest off', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { mode: 'scrolling' } } }).app)).toBe(false));
+  it('true when scrollbar enabled', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { enabled: true, mode: 'hidden' } } }).app)).toBe(true));
+  it('false when scrollbar disabled and rest off', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { enabled: false, mode: 'always' } } }).app)).toBe(false));
 });

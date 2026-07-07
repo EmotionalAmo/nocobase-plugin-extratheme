@@ -121,24 +121,31 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     );
   }
 
-  // Scrollbar display (macOS-style). 'always' = a slim ALWAYS-visible scrollbar (styling
-  // ::-webkit-scrollbar forces the classic, non-overlay bar); 'scrolling' = emit nothing
-  // → the native overlay bar that auto-hides (the macOS "when scrolling" behavior).
-  if (app.scrollbar?.mode === 'always') {
-    out.push(
-      `${scope} ::-webkit-scrollbar,${scope}::-webkit-scrollbar{width:10px;height:10px;}` +
-        `${scope} ::-webkit-scrollbar-thumb,${scope}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.22);border-radius:8px;border:2px solid transparent;background-clip:content-box;}` +
-        `${scope} ::-webkit-scrollbar-thumb:hover,${scope}::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.4);background-clip:content-box;}` +
-        `${scope} ::-webkit-scrollbar-track,${scope}::-webkit-scrollbar-track{background:transparent;}`,
-    );
+  // Scrollbar display. When enabled: 'always' = a slim ALWAYS-visible bar (styling
+  // ::-webkit-scrollbar forces the classic, non-overlay bar); 'hidden' = fully hidden
+  // scrollbar (content still scrolls via wheel/trackpad). Off = native (emit nothing).
+  if (app.scrollbar?.enabled) {
+    if (app.scrollbar.mode === 'hidden') {
+      out.push(
+        `${scope} ::-webkit-scrollbar,${scope}::-webkit-scrollbar{display:none;width:0;height:0;}` +
+          `${scope},${scope} *{scrollbar-width:none;-ms-overflow-style:none;}`,
+      );
+    } else {
+      out.push(
+        `${scope} ::-webkit-scrollbar,${scope}::-webkit-scrollbar{width:10px;height:10px;}` +
+          `${scope} ::-webkit-scrollbar-thumb,${scope}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.22);border-radius:8px;border:2px solid transparent;background-clip:content-box;}` +
+          `${scope} ::-webkit-scrollbar-thumb:hover,${scope}::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.4);background-clip:content-box;}` +
+          `${scope} ::-webkit-scrollbar-track,${scope}::-webkit-scrollbar-track{background:transparent;}`,
+      );
+    }
   }
 
   return out.join('\n');
 }
 
-/** True when any app-scope section (bg/card, header, sider, font, or always-scrollbar) is on. */
+/** True when any app-scope section (bg/card, header, sider, font, or scrollbar) is on. */
 export function isAppActive(app: AppConfig): boolean {
-  return !!(app.enabled || app.header.enabled || app.sider.enabled || app.font?.enabled || app.scrollbar?.mode === 'always');
+  return !!(app.enabled || app.header.enabled || app.sider.enabled || app.font?.enabled || app.scrollbar?.enabled);
 }
 
 /** Thin stylesheet: page background + frosted blur (surface colors are antd tokens). */

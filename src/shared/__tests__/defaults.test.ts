@@ -16,8 +16,9 @@ describe('defaults', () => {
     expect(DEFAULT_APP.sider).toMatchObject({ style: 'frosted', opacity: 86, blur: 16 });
     expect(DEFAULT_APP.card).toMatchObject({ glass: true, opacity: 72, blur: 12 });
   });
-  it('scrollbar defaults to native (scrolling / auto-hide)', () => {
-    expect(DEFAULT_APP.scrollbar.mode).toBe('scrolling');
+  it('scrollbar defaults off (native), mode always', () => {
+    expect(DEFAULT_APP.scrollbar.enabled).toBe(false);
+    expect(DEFAULT_APP.scrollbar.mode).toBe('always');
   });
   it('font defaults off, system source, non-empty sans family, empty upload', () => {
     expect(DEFAULT_APP.font.enabled).toBe(false);

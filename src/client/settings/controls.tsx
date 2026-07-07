@@ -180,26 +180,29 @@ const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void 
   );
 };
 
-// Scrollbar display (macOS-style): 始终显示 (always-visible slim bar) vs 滚动时显示
-// (native overlay auto-hide). Independent of the workspace master switch.
+// Scrollbar display: 始终显示 (always-visible slim bar) vs 始终隐藏 (fully hidden;
+// content still scrolls). Own on/off switch — off = native. Independent of the master switch.
 const ScrollbarGroup: React.FC<{ scrollbar: ScrollbarConfig; onChange: (s: ScrollbarConfig) => void }> = ({ scrollbar, onChange }) => {
   const t = useT();
+  const set = (p: Partial<ScrollbarConfig>) => onChange({ ...scrollbar, ...p });
   return (
-    <Group title={t('滚动条')}>
-      <Row label={t('显示方式')}>
-        <Segmented
-          block
-          size="small"
-          value={scrollbar.mode}
-          onChange={(v) => onChange({ mode: v as any })}
-          options={[
-            { label: t('始终显示'), value: 'always' },
-            { label: t('滚动时显示'), value: 'scrolling' },
-          ]}
-        />
-      </Row>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
-        {t('“滚动时显示”跟随系统（macOS 覆盖式自动隐藏）；“始终显示”为常驻细滚动条。')}
+    <Group title={t('滚动条')} right={<Switch size="small" checked={scrollbar.enabled} onChange={(v) => set({ enabled: v })} />}>
+      <div style={dimStyle(scrollbar.enabled)}>
+        <Row label={t('显示方式')}>
+          <Segmented
+            block
+            size="small"
+            value={scrollbar.mode}
+            onChange={(v) => set({ mode: v as any })}
+            options={[
+              { label: t('始终显示'), value: 'always' },
+              { label: t('始终隐藏'), value: 'hidden' },
+            ]}
+          />
+        </Row>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+          {t('“始终显示”为常驻细滚动条；“始终隐藏”完全隐藏滚动条（内容仍可滚动）。')}
+        </div>
       </div>
     </Group>
   );

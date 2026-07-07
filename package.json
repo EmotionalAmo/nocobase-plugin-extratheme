@@ -1,6 +1,6 @@
 {
   "name": "@amo/plugin-extratheme",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "displayName": "ExtraTheme",
   "displayName.zh-CN": "主题增强",
   "description": "Enhance NocoBase theming: custom background (image/gradient/color), transparency, frosted-glass, and top/side navigation style — for /admin, /v and the sign-in page. Configured globally in plugin settings; disabled by default.",

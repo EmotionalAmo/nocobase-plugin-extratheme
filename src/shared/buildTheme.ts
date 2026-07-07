@@ -66,12 +66,14 @@ export function buildThemeConfig(
 ): ExtraThemeConfigOut {
   const token: Record<string, any> = { ...baseToken };
 
-  // Reset every managed key to native (or drop it → antd computes its default,
-  // i.e. the native look). Non-managed base keys (colorPrimary, …) pass through.
-  for (const k of MANAGED_TOKENS) {
-    if (nativeToken[k] != null) token[k] = nativeToken[k];
-    else delete token[k];
-  }
+  // Clear every managed key so antd computes its true default when we don't re-set it
+  // below. We DELETE rather than restore from nativeToken: the live/default theme object
+  // can itself be polluted by a prior setTheme (e.g. colorBgContainer left translucent),
+  // so copying "native" would silently re-apply that pollution — which is exactly what
+  // kept cards see-through after the 内容区卡片 switch was turned off. Non-managed base
+  // keys (colorPrimary, colorBgHeader, …) pass through untouched.
+  for (const k of MANAGED_TOKENS) delete token[k];
+  void nativeToken; // kept for signature stability; no longer used for restore
   // Overlays (Modal/Drawer/Dropdown/Popover/…) always opaque.
   token.colorBgElevated = '#ffffff';
 

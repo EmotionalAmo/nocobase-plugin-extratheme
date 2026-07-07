@@ -99,12 +99,11 @@ describe('buildThemeConfig', () => {
     expect(t.token.fontFamily).toBe('"My Font"x');
   });
 
-  it('fontFamily reverts to native when font turned off (no pollution leak)', () => {
+  it('font off -> fontFamily cleared (antd default), prior value not leaked', () => {
     // base carries a prior fontFamily (as if a previous "on" save fed it back)
     const polluted = { fontFamily: '"Kaiti SC",serif', colorPrimary: '#ff7900' };
-    const native = { ...NATIVE, fontFamily: 'system-ui,sans-serif' };
-    const t = buildThemeConfig(mergeConfig({ app: { font: { enabled: false } } }).app, polluted, native);
-    expect(t.token.fontFamily).toBe('system-ui,sans-serif'); // restored to native
+    const t = buildThemeConfig(mergeConfig({ app: { font: { enabled: false } } }).app, polluted, NATIVE);
+    expect(t.token.fontFamily).toBeUndefined(); // deleted → antd default font (not the polluted value)
     expect(t.token.colorPrimary).toBe('#ff7900'); // non-managed preserved
   });
 

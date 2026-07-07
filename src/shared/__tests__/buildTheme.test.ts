@@ -44,10 +44,16 @@ describe('buildThemeConfig', () => {
     expect(t.token.colorTextHeaderMenu).toBe('rgba(0,0,0,0.65)');
   });
 
-  it('工作区外观 on -> translucent card + transparent layout', () => {
-    const t = buildThemeConfig(mergeConfig({ app: { enabled: true, card: { opacity: 40 } } }).app, BASE);
+  it('工作区外观 on + card glass on -> translucent card + transparent layout', () => {
+    const t = buildThemeConfig(mergeConfig({ app: { enabled: true, card: { glass: true, opacity: 40 } } }).app, BASE);
     expect(t.token.colorBgContainer).toBe('rgba(255,255,255,0.4)');
     expect(t.token.colorBgLayout).toBe('transparent');
+  });
+
+  it('工作区外观 on but card glass OFF -> cards stay opaque (bg still shows)', () => {
+    const t = buildThemeConfig(mergeConfig({ app: { enabled: true, card: { glass: false, opacity: 40 } } }).app, BASE, NATIVE);
+    expect(t.token.colorBgContainer).toBeUndefined(); // not translucent → opaque native cards
+    expect(t.token.colorBgLayout).toBe('transparent'); // page background still visible
   });
 
   it('header on -> plugin does NOT set nav color/text tokens (theme owns them; opacity/blur are CSS)', () => {

@@ -40,19 +40,21 @@ export const LivePreview: React.FC<{ scope: 'app' | 'login'; app: AppConfig; log
 }) => {
   const t = useT();
   if (scope === 'app') {
-    const cardStyle: React.CSSProperties = app.enabled
-      ? {
-          flex: 1,
-          borderRadius: 10,
-          padding: 12,
-          background: hexToRgba('#ffffff', app.card.opacity / 100),
-          backdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
-          WebkitBackdropFilter: app.card.glass && app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
-          border: app.card.border ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
-          color: '#1f2733',
-          fontSize: 12,
-        }
-      : { flex: 1, borderRadius: 10, padding: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', color: '#1f2733', fontSize: 12 };
+    // Cards are translucent only when 工作区外观 is on AND the 内容区卡片 switch (glass) is on.
+    const cardStyle: React.CSSProperties =
+      app.enabled && app.card.glass
+        ? {
+            flex: 1,
+            borderRadius: 10,
+            padding: 12,
+            background: hexToRgba('#ffffff', app.card.opacity / 100),
+            backdropFilter: app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
+            WebkitBackdropFilter: app.card.blur > 0 ? `blur(${app.card.blur}px)` : undefined,
+            border: app.card.border ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
+            color: '#1f2733',
+            fontSize: 12,
+          }
+        : { flex: 1, borderRadius: 10, padding: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', color: '#1f2733', fontSize: 12 };
     // controls (Input/Select/Table/…) stay OPAQUE in reality (KEEP_OPAQUE_COMPONENTS),
     // even when the card around them is translucent — show that truthfully.
     const opaque: React.CSSProperties = { background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6 };

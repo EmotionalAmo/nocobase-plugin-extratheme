@@ -76,8 +76,14 @@ export function buildThemeConfig(
   token.colorBgElevated = '#ffffff';
 
   if (app.enabled) {
-    token.colorBgContainer = hexToRgba('#ffffff', app.card.opacity / 100);
+    // colorBgLayout transparent so the page background shows through, regardless of cards.
     token.colorBgLayout = 'transparent';
+    // Card translucency is gated on the 内容区卡片 switch (card.glass): OFF ⇒ leave
+    // colorBgContainer reset-to-native (opaque cards). Otherwise the switch only killed
+    // the blur while cards stayed see-through.
+    if (app.card.glass) {
+      token.colorBgContainer = hexToRgba('#ffffff', app.card.opacity / 100);
+    }
   }
 
   // NOTE: the top + side nav are NOT themed via tokens here. Their COLOR is owned by

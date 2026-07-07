@@ -164,15 +164,17 @@ const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void 
   const set = (p: Partial<CardConfig>) => onChange({ ...card, ...p });
   return (
     <Group title={t('内容区卡片')} right={<Switch size="small" checked={card.glass} onChange={(v) => set({ glass: v })} />}>
-      <Row label={t('卡片不透明度')} value={`${card.opacity}%`}>
-        <Slider min={10} max={100} value={card.opacity} onChange={(v) => set({ opacity: v })} />
-      </Row>
-      <Row label={t('背景模糊')} value={`${card.blur}px`}>
-        <Slider min={0} max={40} value={card.blur} onChange={(v) => set({ blur: v })} />
-      </Row>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 12.5, color: '#475569' }}>{t('浅色描边')}</span>
-        <Switch size="small" checked={card.border} onChange={(v) => set({ border: v })} />
+      <div style={dimStyle(card.glass)}>
+        <Row label={t('卡片不透明度')} value={`${card.opacity}%`}>
+          <Slider min={10} max={100} value={card.opacity} onChange={(v) => set({ opacity: v })} />
+        </Row>
+        <Row label={t('背景模糊')} value={`${card.blur}px`}>
+          <Slider min={0} max={40} value={card.blur} onChange={(v) => set({ blur: v })} />
+        </Row>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12.5, color: '#475569' }}>{t('浅色描边')}</span>
+          <Switch size="small" checked={card.border} onChange={(v) => set({ border: v })} />
+        </div>
       </div>
     </Group>
   );

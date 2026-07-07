@@ -1,6 +1,6 @@
 import React from 'react';
 import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button } from 'antd';
-import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig } from '../../shared/types';
+import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig } from '../../shared/types';
 import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { useT } from '../useT';
 
@@ -175,6 +175,31 @@ const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void 
           <span style={{ fontSize: 12.5, color: '#475569' }}>{t('浅色描边')}</span>
           <Switch size="small" checked={card.border} onChange={(v) => set({ border: v })} />
         </div>
+      </div>
+    </Group>
+  );
+};
+
+// Scrollbar display (macOS-style): 始终显示 (always-visible slim bar) vs 滚动时显示
+// (native overlay auto-hide). Independent of the workspace master switch.
+const ScrollbarGroup: React.FC<{ scrollbar: ScrollbarConfig; onChange: (s: ScrollbarConfig) => void }> = ({ scrollbar, onChange }) => {
+  const t = useT();
+  return (
+    <Group title={t('滚动条')}>
+      <Row label={t('显示方式')}>
+        <Segmented
+          block
+          size="small"
+          value={scrollbar.mode}
+          onChange={(v) => onChange({ mode: v as any })}
+          options={[
+            { label: t('始终显示'), value: 'always' },
+            { label: t('滚动时显示'), value: 'scrolling' },
+          ]}
+        />
+      </Row>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+        {t('“滚动时显示”跟随系统（macOS 覆盖式自动隐藏）；“始终显示”为常驻细滚动条。')}
       </div>
     </Group>
   );
@@ -379,6 +404,8 @@ export const AppForm: React.FC<{
           <BackgroundGroup first bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
           <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
         </div>
+        {/* scrollbar is a global preference, independent of the workspace switch (not dimmed) */}
+        <ScrollbarGroup scrollbar={app.scrollbar} onChange={(scrollbar) => onChange({ ...app, scrollbar })} />
       </Panel>
       {/* middle column: top + side nav stacked vertically */}
       <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 20 }}>

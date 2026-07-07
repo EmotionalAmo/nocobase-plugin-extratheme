@@ -48,6 +48,12 @@ export interface FontConfig {
   upload: FontUpload; // uploaded font (upload source)
 }
 
+export type ScrollbarMode = 'always' | 'scrolling';
+export interface ScrollbarConfig {
+  // 'always' = a slim always-visible scrollbar; 'scrolling' = leave native (macOS overlay auto-hide).
+  mode: ScrollbarMode;
+}
+
 export interface AppConfig {
   enabled: boolean;
   background: BackgroundConfig;
@@ -55,6 +61,7 @@ export interface AppConfig {
   header: NavConfig;
   sider: NavConfig;
   font: FontConfig;
+  scrollbar: ScrollbarConfig;
 }
 
 export interface LoginCard {

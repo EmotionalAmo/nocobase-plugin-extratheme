@@ -101,6 +101,14 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4))');
   });
 
+  it('scrollbar always -> emits always-visible ::-webkit-scrollbar; scrolling -> none', () => {
+    const always = generateStylesheet(mergeConfig({ app: { scrollbar: { mode: 'always' } } }), SEL);
+    expect(always).toContain('::-webkit-scrollbar,body.extra-theme-app-on::-webkit-scrollbar{width:10px');
+    expect(always).toContain('::-webkit-scrollbar-thumb');
+    const scrolling = generateStylesheet(mergeConfig({ app: { scrollbar: { mode: 'scrolling' } } }), SEL);
+    expect(scrolling).not.toContain('::-webkit-scrollbar{width:10px');
+  });
+
   it('font on -> font-family on body scope; off/empty -> none', () => {
     const on = generateStylesheet(mergeConfig({ app: { font: { enabled: true, family: '"Kaiti SC",serif' } } }), SEL);
     expect(on).toContain('body.extra-theme-app-on{font-family:"Kaiti SC",serif!important;}');
@@ -148,4 +156,6 @@ describe('isAppActive', () => {
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));
   it('true when only 工作区外观 on', () => expect(isAppActive(mergeConfig({ app: { enabled: true } }).app)).toBe(true));
   it('true when only font on', () => expect(isAppActive(mergeConfig({ app: { font: { enabled: true } } }).app)).toBe(true));
+  it('true when scrollbar=always', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { mode: 'always' } } }).app)).toBe(true));
+  it('false when scrollbar=scrolling and rest off', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { mode: 'scrolling' } } }).app)).toBe(false));
 });

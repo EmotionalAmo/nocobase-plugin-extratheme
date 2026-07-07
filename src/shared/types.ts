@@ -9,7 +9,7 @@
 export type BgType = 'none' | 'color' | 'gradient' | 'image';
 export type NavStyle = 'solid' | 'frosted';
 export type TextTone = 'dark' | 'light';
-export type BgFit = 'cover' | 'contain' | 'repeat';
+export type BgFit = 'cover' | 'contain' | 'stretch' | 'repeat';
 
 export interface BackgroundConfig {
   type: BgType;

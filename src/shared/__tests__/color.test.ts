@@ -39,6 +39,14 @@ describe('buildBackground', () => {
     expect(r.size).toBe('auto');
     expect(r.repeat).toBe('repeat');
   });
+  it('image stretch -> 100% 100% (non-uniform fill), no-repeat', () => {
+    const r = buildBackground({ ...base, type: 'image', image: { url: 'http://x/y.png', fit: 'stretch', position: 'center' } });
+    expect(r.size).toBe('100% 100%');
+    expect(r.repeat).toBe('no-repeat');
+  });
+  it('image contain keeps the contain keyword', () => {
+    expect(buildBackground({ ...base, type: 'image', image: { url: 'http://x/y.png', fit: 'contain', position: 'center' } }).size).toBe('contain');
+  });
   it('image with empty url -> transparent', () => {
     const r = buildBackground({ ...base, type: 'image', image: { url: '', fit: 'cover', position: 'center' } });
     expect(r.image).toBe('transparent');

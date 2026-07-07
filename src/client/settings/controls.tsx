@@ -144,6 +144,7 @@ const BackgroundGroup: React.FC<{ bg: BackgroundConfig; onChange: (b: Background
               options={[
                 { label: t('铺满'), value: 'cover' },
                 { label: t('适应'), value: 'contain' },
+                { label: t('拉伸'), value: 'stretch' },
                 { label: t('平铺'), value: 'repeat' },
               ]}
             />

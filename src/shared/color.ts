@@ -64,7 +64,10 @@ export function buildBackground(bg: BackgroundConfig): {
   // image
   const url = bg.image?.url;
   if (!url) return none;
-  const repeat = bg.image.fit === 'repeat' ? 'repeat' : 'no-repeat';
-  const size = bg.image.fit === 'repeat' ? 'auto' : bg.image.fit; // cover | contain
+  const fit = bg.image.fit;
+  const repeat = fit === 'repeat' ? 'repeat' : 'no-repeat';
+  // cover|contain are valid background-size keywords; stretch = 100% 100% (non-uniform
+  // fill, distorts); repeat = natural size (auto) tiled.
+  const size = fit === 'repeat' ? 'auto' : fit === 'stretch' ? '100% 100%' : fit;
   return { image: `url("${url}")`, size, repeat, position: bg.image.position || 'center' };
 }

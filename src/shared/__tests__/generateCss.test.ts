@@ -77,6 +77,15 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('background-attachment:fixed!important;');
   });
 
+  it('image fit=stretch -> background-size:100% 100% !important (non-uniform fill)', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { enabled: true, background: { type: 'image', image: { url: 'http://h/p.jpg', fit: 'stretch', position: 'center' } } as any } }),
+      SEL,
+    );
+    expect(css).toContain('background-size:100% 100%!important;');
+    expect(css).toContain('background-repeat:no-repeat!important;');
+  });
+
   it('image fit=repeat -> tiles at natural size (size:auto + repeat)', () => {
     const css = generateStylesheet(
       mergeConfig({ app: { enabled: true, background: { type: 'image', image: { url: 'http://h/p.jpg', fit: 'repeat', position: 'center' } } as any } }),

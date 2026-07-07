@@ -22,12 +22,17 @@ function bgDecl(bg: BackgroundConfig): string {
     const d = hexToRgba('#000000', bg.dim / 100);
     image = `linear-gradient(${d},${d}),${b.image}`;
   }
+  // NOTE: the `background` shorthand (with !important) implicitly resets
+  // background-size/repeat/position/attachment to their initial values AND carries
+  // the !important, so a following plain `background-size:cover` loses to it (image
+  // ends up auto-sized + tiled). The longhands MUST also be !important — then, equal
+  // importance, the later source-order declaration wins and they take effect.
   return (
     `background:${image}!important;` +
-    `background-size:${b.size};` +
-    `background-repeat:${b.repeat};` +
-    `background-position:${b.position};` +
-    `background-attachment:fixed;`
+    `background-size:${b.size}!important;` +
+    `background-repeat:${b.repeat}!important;` +
+    `background-position:${b.position}!important;` +
+    `background-attachment:fixed!important;`
   );
 }
 

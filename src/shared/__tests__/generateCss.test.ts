@@ -16,7 +16,7 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
   it('工作区外观 on -> body background + content transparent + class-less clear', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL);
     expect(css).toContain('body.extra-theme-app-on{background:linear-gradient(135deg,#e0f2fe,#ede9fe)');
-    expect(css).toContain('background-attachment:fixed');
+    expect(css).toContain('background-attachment:fixed!important');
     expect(css).toContain('body.extra-theme-app-on .ant-pro-layout-content{background:transparent!important;}');
     expect(css).toContain('.ant-card div:not([class]):not([id])');
     expect(css).toContain('.ant-layout-sider-children{top:auto!important;bottom:0!important;}');
@@ -64,6 +64,26 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
   it('sider frosted -> blur lands on the sider-children container', () => {
     const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
     expect(css).toMatch(/\.ant-layout-sider-children\{background:[^}]*backdrop-filter:blur\(18px\);/);
+  });
+
+  it('image fit=cover -> size:cover + no-repeat, all !important so it fills (no tiling)', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { enabled: true, background: { type: 'image', image: { url: 'http://h/p.jpg', fit: 'cover', position: 'center' } } as any } }),
+      SEL,
+    );
+    expect(css).toContain('background-size:cover!important;');
+    expect(css).toContain('background-repeat:no-repeat!important;');
+    expect(css).toContain('background-position:center!important;');
+    expect(css).toContain('background-attachment:fixed!important;');
+  });
+
+  it('image fit=repeat -> tiles at natural size (size:auto + repeat)', () => {
+    const css = generateStylesheet(
+      mergeConfig({ app: { enabled: true, background: { type: 'image', image: { url: 'http://h/p.jpg', fit: 'repeat', position: 'center' } } as any } }),
+      SEL,
+    );
+    expect(css).toContain('background-size:auto!important;');
+    expect(css).toContain('background-repeat:repeat!important;');
   });
 
   it('dim>0 composites a black layer into the body background', () => {

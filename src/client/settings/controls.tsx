@@ -178,14 +178,16 @@ const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void 
   );
 };
 
-// Nav enhancement = style + opacity + blur ONLY. The nav COLOR (and menu text color)
-// are managed by the theme editor now; the plugin captures the theme's color at save
-// and just layers transparency/blur over it.
+// Nav = one base COLOR (the theme editor can't set colorBgHeader, so the plugin owns it)
+// + the enhancement layer: style + opacity + blur. Menu TEXT color stays theme-managed.
 const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
   const t = useT();
   const set = (p: Partial<NavConfig>) => onChange({ ...nav, ...p });
   return (
     <Group first>
+      <Row label={t('背景颜色')}>
+        <ColorPicker value={nav.color} onChangeComplete={(c) => set({ color: hex(c) })} showText disabledAlpha />
+      </Row>
       <Row label={t('风格')}>
         <Segmented
           block
@@ -204,9 +206,6 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
       <Row label={t('背景模糊')} value={`${nav.blur}px`}>
         <Slider min={0} max={40} value={nav.blur} disabled={nav.style !== 'frosted'} onChange={(v) => set({ blur: v })} />
       </Row>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
-        {t('颜色由主题编辑器管理，这里只叠加透明度与模糊。')}
-      </div>
     </Group>
   );
 };

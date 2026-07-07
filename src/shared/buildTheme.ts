@@ -45,15 +45,11 @@ export interface ExtraThemeConfigOut {
  * state fed back through setTheme() (which makes theme.token carry them) can't
  * leak into a later "off" state and block a clean revert.
  */
-const MANAGED_TOKENS = [
-  'colorBgContainer',
-  'colorBgLayout',
-  'colorBgHeader',
-  'colorTextHeaderMenu',
-  'colorTextHeaderMenuHover',
-  'colorTextHeaderMenuActive',
-  'fontFamily',
-];
+// The nav bar colors/text (colorBgHeader, colorTextHeaderMenu*) are DELIBERATELY not
+// here anymore: ExtraTheme hands the nav COLOR back to the theme editor and only layers
+// opacity + blur on top (via CSS in generateStylesheet). buildTheme owns only the
+// workspace surface + layout + font tokens.
+const MANAGED_TOKENS = ['colorBgContainer', 'colorBgLayout', 'fontFamily'];
 
 /**
  * @param app       the 工作区外观 config
@@ -84,21 +80,10 @@ export function buildThemeConfig(
     token.colorBgLayout = 'transparent';
   }
 
-  if (app.header.enabled) {
-    token.colorBgHeader = hexToRgba(app.header.color, app.header.opacity / 100);
-    if (app.header.text === 'dark') {
-      token.colorTextHeaderMenu = 'rgba(0,0,0,0.65)';
-      token.colorTextHeaderMenuHover = 'rgba(0,0,0,0.88)';
-      token.colorTextHeaderMenuActive = 'rgba(0,0,0,0.88)';
-    }
-    // 'light' keeps the native (restored) white-ish header menu text tokens.
-  }
-
-  // NOTE: the side nav is NOT themed via a token. colorBgSider tints only the
-  // (inset) menu and NocoBase's algorithm transforms the value, leaving a
-  // non-uniform sider with a visible seam. The sider is OUTER chrome (not inside
-  // a code-block), so CSS reaches it directly — generateStylesheet tints the
-  // full-width sider container with the exact configured value instead.
+  // NOTE: the top + side nav are NOT themed via tokens here. Their COLOR is owned by
+  // the theme editor (colorBgHeader + menu text tokens pass through untouched); the
+  // plugin only layers opacity + blur onto the actual nav elements via CSS
+  // (generateStylesheet), using the theme's own color as the base.
 
   // Global font — a token so it penetrates isolated code-block roots. Independent
   // of the other sections. For an uploaded font the token references the quoted

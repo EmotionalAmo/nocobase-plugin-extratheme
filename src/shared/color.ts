@@ -42,6 +42,30 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+/** Parse a color (hex/rgb/rgba) to [r,g,b] ints, or null if unparseable (keyword/var). */
+function parseRgb(color: string): [number, number, number] | null {
+  const c = (color || '').trim();
+  const m = c.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+  if (m) return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3])];
+  let h = c.replace('#', '');
+  if (h.length === 3) h = h.split('').map((x) => x + x).join('');
+  if (/^[0-9a-f]{6}$/i.test(h)) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  return null;
+}
+
+/** Drop any alpha and return a solid 'rgb(r,g,b)' — used to capture the theme's nav
+ * color as a stable base (so re-deriving never double-alphas). Falls back to input. */
+export function toSolidRgb(color: string): string {
+  const rgb = parseRgb(color);
+  return rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : (color || '').trim();
+}
+
+/** Apply an alpha to ANY color (hex/rgb/rgba); the RGB is preserved. Falls back to input. */
+export function withAlpha(color: string, alpha: number): string {
+  const rgb = parseRgb(color);
+  return rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})` : (color || '').trim();
+}
+
 /** Resolve a BackgroundConfig into CSS background-* values. */
 export function buildBackground(bg: BackgroundConfig): {
   image: string;

@@ -35,7 +35,7 @@ const Group: React.FC<{ title?: string; right?: React.ReactNode; children: React
 );
 
 /** a column card */
-const Panel: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
+const Panel: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode; style?: React.CSSProperties }> = ({ title, right, children, style }) => (
   <div
     style={{
       flex: '1 1 300px',
@@ -46,6 +46,7 @@ const Panel: React.FC<{ title: string; right?: React.ReactNode; children: React.
       boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
       padding: '16px 20px 20px',
       alignSelf: 'stretch',
+      ...style,
     }}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 13, borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
@@ -177,6 +178,9 @@ const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void 
   );
 };
 
+// Nav enhancement = style + opacity + blur ONLY. The nav COLOR (and menu text color)
+// are managed by the theme editor now; the plugin captures the theme's color at save
+// and just layers transparency/blur over it.
 const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
   const t = useT();
   const set = (p: Partial<NavConfig>) => onChange({ ...nav, ...p });
@@ -194,27 +198,15 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
           ]}
         />
       </Row>
-      <Row label={t('背景颜色')}>
-        <ColorPicker value={nav.color} onChangeComplete={(c) => set({ color: hex(c) })} showText disabledAlpha />
-      </Row>
       <Row label={t('不透明度')} value={`${nav.opacity}%`}>
         <Slider min={0} max={100} value={nav.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
       <Row label={t('背景模糊')} value={`${nav.blur}px`}>
         <Slider min={0} max={40} value={nav.blur} disabled={nav.style !== 'frosted'} onChange={(v) => set({ blur: v })} />
       </Row>
-      <Row label={t('文字颜色')}>
-        <Segmented
-          block
-          size="small"
-          value={nav.text}
-          onChange={(v) => set({ text: v as any })}
-          options={[
-            { label: t('深色'), value: 'dark' },
-            { label: t('浅色'), value: 'light' },
-          ]}
-        />
-      </Row>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+        {t('颜色由主题编辑器管理，这里只叠加透明度与模糊。')}
+      </div>
     </Group>
   );
 };
@@ -377,7 +369,9 @@ export const AppForm: React.FC<{
   uploadFont?: (f: File) => Promise<{ url: string; name: string; format: string }>;
 }> = ({ app, onChange, uploadImage, uploadFont }) => {
   const t = useT();
+  const navPanelStyle = { flex: '0 0 auto' } as React.CSSProperties;
   return (
+    // Row: 工作区外观 | (顶部导航栏 above 侧边导航栏) | 全局字体
     <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'stretch' }}>
       <Panel title={t('工作区外观')} right={<Switch checked={app.enabled} onChange={(v) => onChange({ ...app, enabled: v })} />}>
         <div style={dimStyle(app.enabled)}>
@@ -385,22 +379,27 @@ export const AppForm: React.FC<{
           <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
         </div>
       </Panel>
-      <Panel
-        title={t('顶部导航栏')}
-        right={<Switch checked={app.header.enabled} onChange={(v) => onChange({ ...app, header: { ...app.header, enabled: v } })} />}
-      >
-        <div style={dimStyle(app.header.enabled)}>
-          <NavGroup nav={app.header} onChange={(header) => onChange({ ...app, header })} />
-        </div>
-      </Panel>
-      <Panel
-        title={t('侧边导航栏')}
-        right={<Switch checked={app.sider.enabled} onChange={(v) => onChange({ ...app, sider: { ...app.sider, enabled: v } })} />}
-      >
-        <div style={dimStyle(app.sider.enabled)}>
-          <NavGroup nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
-        </div>
-      </Panel>
+      {/* middle column: top + side nav stacked vertically */}
+      <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Panel
+          style={navPanelStyle}
+          title={t('顶部导航栏')}
+          right={<Switch checked={app.header.enabled} onChange={(v) => onChange({ ...app, header: { ...app.header, enabled: v } })} />}
+        >
+          <div style={dimStyle(app.header.enabled)}>
+            <NavGroup nav={app.header} onChange={(header) => onChange({ ...app, header })} />
+          </div>
+        </Panel>
+        <Panel
+          style={navPanelStyle}
+          title={t('侧边导航栏')}
+          right={<Switch checked={app.sider.enabled} onChange={(v) => onChange({ ...app, sider: { ...app.sider, enabled: v } })} />}
+        >
+          <div style={dimStyle(app.sider.enabled)}>
+            <NavGroup nav={app.sider} onChange={(sider) => onChange({ ...app, sider })} />
+          </div>
+        </Panel>
+      </div>
       <Panel
         title={t('全局字体')}
         right={<Switch checked={app.font.enabled} onChange={(v) => onChange({ ...app, font: { ...app.font, enabled: v } })} />}

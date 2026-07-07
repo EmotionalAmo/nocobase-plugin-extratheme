@@ -1,5 +1,5 @@
 import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
-import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl } from './color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha } from './color';
 
 /**
  * With the token-based redesign, surface COLORS come from the antd theme
@@ -72,9 +72,14 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     }
   }
 
-  // Top nav blur — independent of the workspace switch (colors come from tokens).
-  if (app.header.enabled && app.header.style === 'frosted' && app.header.blur > 0) {
-    out.push(`${scopedList(scope, s.header)}{${blur(app.header.blur)}}`);
+  // Top nav — the plugin only layers OPACITY + BLUR onto the theme's own header color
+  // (header.color is captured from the theme's colorBgHeader at save time). The color
+  // itself stays theme-editor-managed. Independent of the workspace switch. Targets the
+  // real pro-layout header (and the outer wrapper for robustness).
+  if (app.header.enabled) {
+    const headerBg = withAlpha(app.header.color, app.header.opacity / 100);
+    const glass = app.header.style === 'frosted' && app.header.blur > 0 ? blur(app.header.blur) : '';
+    out.push(`${scope} .ant-layout-header,${scope} .ant-pro-layout-header{background:${headerBg}!important;${glass}}`);
   }
 
   // Global font. The antd token (buildTheme) covers antd text; setting font-family on
@@ -98,19 +103,18 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     }
   }
 
-  // Side nav (CSS, not a token — it's outer chrome, CSS reaches it, and a token
-  // only tints the inset menu → a seam). Tint the FULL-WIDTH sider container with
-  // the exact configured value; clear the dark placeholder + the inset menu's own
-  // bg + the menu/container right border (the "invisible border") so the whole
-  // sider is one uniform panel; blur; tame the internal scrollbar.
+  // Side nav — same deal: only OPACITY + BLUR over the theme's own nav color
+  // (sider.color captured from the theme at save). Tint the FULL-WIDTH sider container
+  // uniformly; clear the dark placeholder + the inset menu's own bg + the menu/container
+  // right border (the "invisible border"); tame the internal scrollbar. Menu TEXT color
+  // is left to the theme (not overridden).
   if (app.sider.enabled) {
-    const siderBg = hexToRgba(app.sider.color, app.sider.opacity / 100);
+    const siderBg = withAlpha(app.sider.color, app.sider.opacity / 100);
     const glass = app.sider.style === 'frosted' && app.sider.blur > 0 ? blur(app.sider.blur) : '';
-    const fg = app.sider.text === 'light' ? '#f8fafc' : '#1f2733';
     out.push(
       `${scope} .ant-layout-sider{background:transparent!important;}` +
         `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}}` +
-        `${scope} .ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;color:${fg};}` +
+        `${scope} .ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-track{background:transparent;}`,

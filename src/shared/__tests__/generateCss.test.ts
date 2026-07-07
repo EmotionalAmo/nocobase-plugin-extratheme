@@ -22,10 +22,10 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('.ant-layout-sider-children{top:auto!important;bottom:0!important;}');
   });
 
-  it('does NOT emit surface color rules (those are antd tokens now)', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: true, header: { enabled: true } } }), SEL);
-    expect(css).not.toContain('rgba(255,255,255'); // no colorBgContainer/header color in CSS
-    expect(css).not.toMatch(/\.ant-layout-header\{background:/);
+  it('workspace card/container color stays a token (not a CSS rule)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL); // no nav
+    expect(css).not.toContain('colorBgContainer');
+    expect(css).not.toMatch(/\.ant-card\{background:rgba/); // card color is a token, not CSS
   });
 
   it('card glass+blur -> backdrop-filter on .ant-card and .code-block', () => {
@@ -39,15 +39,16 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).not.toContain('backdrop-filter');
   });
 
-  it('header frosted+blur -> backdrop-filter on header, independent of workspace switch', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true, style: 'frosted', blur: 16 } } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-layout-header{backdrop-filter:blur(16px);');
+  it('header on -> theme color at opacity + blur when frosted (independent of workspace switch)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true, color: 'rgb(0, 21, 41)', opacity: 50, style: 'frosted', blur: 16 } } }), SEL);
+    expect(css).toContain('.ant-pro-layout-header{background:rgba(0,21,41,0.5)!important;backdrop-filter:blur(16px);');
     expect(css).not.toContain('background:linear-gradient'); // workspace bg off
   });
 
-  it('header solid -> no header blur', () => {
-    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'solid', blur: 16 } } }), SEL);
-    expect(css).not.toContain('.ant-layout-header{backdrop-filter');
+  it('header solid -> opacity applied but no blur', () => {
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: 'rgb(0, 21, 41)', opacity: 80, style: 'solid', blur: 16 } } }), SEL);
+    expect(css).toContain('background:rgba(0,21,41,0.8)!important;}'); // no blur suffix
+    expect(css).not.toContain('backdrop-filter');
   });
 
   it('sider on -> uniform full-width tint on sider-children + cleared menu bg + no border', () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppConfig, LoginConfig, BackgroundConfig, NavConfig } from '../../shared/types';
-import { hexToRgba, buildBackground } from '../../shared/color';
+import { hexToRgba, buildBackground, withAlpha } from '../../shared/color';
 import { useT } from '../useT';
 
 function bgStyle(bg: BackgroundConfig): React.CSSProperties {
@@ -15,8 +15,9 @@ function bgStyle(bg: BackgroundConfig): React.CSSProperties {
 
 function navStyle(nav: NavConfig): React.CSSProperties {
   const glass = nav.style === 'frosted' && nav.blur > 0 ? `blur(${nav.blur}px)` : undefined;
+  // nav.color is the theme-derived nav color (an rgb()/hex string) — withAlpha handles both.
   return {
-    background: hexToRgba(nav.color, nav.opacity / 100),
+    background: withAlpha(nav.color, nav.opacity / 100),
     backdropFilter: glass,
     WebkitBackdropFilter: glass,
     color: nav.text === 'light' ? '#f8fafc' : '#1f2733',

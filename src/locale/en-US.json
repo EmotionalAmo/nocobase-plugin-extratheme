@@ -39,6 +39,7 @@
   "投影": "Shadow",
   "顶部导航栏": "Top navigation",
   "侧边导航栏": "Side navigation",
+  "颜色由主题编辑器管理，这里只叠加透明度与模糊。": "Color is managed by the theme editor — here you only add opacity and blur.",
   "全局字体": "Global font",
   "字体": "Font",
   "自定义字体": "Custom font",

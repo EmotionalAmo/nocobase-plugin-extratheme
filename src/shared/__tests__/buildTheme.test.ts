@@ -18,15 +18,15 @@ describe('buildThemeConfig', () => {
     expect(t.cssVar).toBe(true);
   });
 
-  it('all disabled -> no surface overrides + native chrome restored', () => {
+  it('all disabled -> managed surface tokens cleared; nav tokens pass through (theme-owned)', () => {
     const t = buildThemeConfig(mergeConfig({}).app, BASE, NATIVE);
     expect(t.token.colorBgContainer).toBeUndefined();
     expect(t.token.colorBgLayout).toBeUndefined();
-    // colorBgHeader restored from native (header disabled by default)
+    // colorBgHeader is NO LONGER managed by the plugin — it passes through from base.
     expect(t.token.colorBgHeader).toBe('#001529');
   });
 
-  it('off state cleanly reverts even when base is polluted by a prior on-state', () => {
+  it('off state reverts managed tokens; nav color/text pass through untouched (theme owns them)', () => {
     // base as it looks AFTER an "on" save fed back through setTheme():
     const polluted = {
       colorPrimary: '#ff7900', // the user's genuine customization
@@ -37,10 +37,11 @@ describe('buildThemeConfig', () => {
     };
     const t = buildThemeConfig(mergeConfig({}).app, polluted, NATIVE);
     expect(t.token.colorPrimary).toBe('#ff7900'); // non-managed key preserved
-    expect(t.token.colorBgContainer).toBeUndefined(); // enhancement cleared
-    expect(t.token.colorBgLayout).toBeUndefined(); // enhancement cleared
-    expect(t.token.colorBgHeader).toBe('#001529'); // native chrome restored
-    expect(t.token.colorTextHeaderMenu).toBe('rgba(255,255,255,0.65)'); // native restored
+    expect(t.token.colorBgContainer).toBeUndefined(); // managed enhancement cleared
+    expect(t.token.colorBgLayout).toBeUndefined(); // managed enhancement cleared
+    // nav tokens are theme-owned now → passed through, NOT reset by the plugin
+    expect(t.token.colorBgHeader).toBe('rgba(255,255,255,0.5)');
+    expect(t.token.colorTextHeaderMenu).toBe('rgba(0,0,0,0.65)');
   });
 
   it('工作区外观 on -> translucent card + transparent layout', () => {
@@ -49,10 +50,10 @@ describe('buildThemeConfig', () => {
     expect(t.token.colorBgLayout).toBe('transparent');
   });
 
-  it('header on -> colorBgHeader translucent + dark text tokens', () => {
+  it('header on -> plugin does NOT set nav color/text tokens (theme owns them; opacity/blur are CSS)', () => {
     const t = buildThemeConfig(mergeConfig({ app: { header: { enabled: true, color: '#ffffff', opacity: 50, text: 'dark' } } }).app, BASE);
-    expect(t.token.colorBgHeader).toBe('rgba(255,255,255,0.5)');
-    expect(t.token.colorTextHeaderMenu).toBe('rgba(0,0,0,0.65)');
+    expect(t.token.colorBgHeader).toBe('#001529'); // base passthrough, not overridden by the plugin
+    expect(t.token.colorTextHeaderMenu).toBeUndefined(); // plugin never touches header text
   });
 
   it('sider on -> NO colorBgSider token (sider is tinted via CSS, not a token)', () => {

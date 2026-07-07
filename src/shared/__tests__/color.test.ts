@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl } from '../color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, toSolidRgb, withAlpha } from '../color';
 
 describe('hexToRgba', () => {
   it('converts 6-digit hex', () => {
@@ -83,6 +83,20 @@ describe('sanitizeFontFamily', () => {
   it('caps length at 200', () => {
     expect(sanitizeFontFamily('a'.repeat(300)).length).toBe(200);
   });
+});
+
+describe('toSolidRgb', () => {
+  it('drops alpha from rgba', () => expect(toSolidRgb('rgba(0, 21, 41, 0.3)')).toBe('rgb(0,21,41)'));
+  it('converts hex', () => expect(toSolidRgb('#001529')).toBe('rgb(0,21,41)'));
+  it('passes rgb through (normalized)', () => expect(toSolidRgb('rgb(255,255,255)')).toBe('rgb(255,255,255)'));
+  it('falls back on keyword/var', () => expect(toSolidRgb('transparent')).toBe('transparent'));
+});
+
+describe('withAlpha', () => {
+  it('applies alpha to hex', () => expect(withAlpha('#001529', 0.5)).toBe('rgba(0,21,41,0.5)'));
+  it('re-applies alpha to rgba without double-fading (RGB kept)', () => expect(withAlpha('rgba(0, 21, 41, 0.2)', 0.8)).toBe('rgba(0,21,41,0.8)'));
+  it('applies alpha to rgb', () => expect(withAlpha('rgb(10, 20, 30)', 1)).toBe('rgba(10,20,30,1)'));
+  it('falls back on keyword', () => expect(withAlpha('transparent', 0.5)).toBe('transparent'));
 });
 
 describe('fontFormatFromUrl', () => {

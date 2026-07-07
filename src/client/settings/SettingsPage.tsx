@@ -4,7 +4,7 @@ import { useAPIClient, useGlobalTheme, defaultTheme } from '@nocobase/client';
 import type { ExtraThemeConfig, AppConfig } from '../../shared/types';
 import { mergeConfig, DEFAULT_APP } from '../../shared/defaults';
 import { buildThemeConfig } from '../../shared/buildTheme';
-import { fontFormatFromUrl } from '../../shared/color';
+import { fontFormatFromUrl, toSolidRgb } from '../../shared/color';
 import { AppForm } from './controls';
 import { LivePreview } from './LivePreview';
 import { useT } from '../useT';
@@ -121,11 +121,22 @@ export const SettingsPage: React.FC = () => {
   const save = async () => {
     setSaving(true);
     try {
-      // 1) persist raw settings (drives the bg-image + blur CSS via getPublic)
-      await api.request({ url: 'extraTheme:set', method: 'post', data: { scope: 'app', config: cfg.app } });
+      // Capture the theme's OWN nav color (colorBgHeader) as the base for the nav
+      // opacity/blur — the plugin no longer owns the nav color, it's theme-managed.
+      // toSolidRgb drops any alpha so re-saving never double-fades.
+      const navColor = toSolidRgb(
+        (theme as any)?.token?.colorBgHeader || (defaultTheme as any)?.token?.colorBgHeader || '#001529',
+      );
+      const app = {
+        ...cfg.app,
+        header: { ...cfg.app.header, color: navColor },
+        sider: { ...cfg.app.sider, color: navColor },
+      };
+      // 1) persist raw settings (drives the bg-image + nav opacity/blur CSS via getPublic)
+      await api.request({ url: 'extraTheme:set', method: 'post', data: { scope: 'app', config: app } });
       // 2) apply surface colors via the antd theme (tokens reach code-blocks)
-      await applyTheme(cfg.app);
-      // 3) refresh the injected CSS (bg + blur) in this session
+      await applyTheme(app);
+      // 3) refresh the injected CSS (bg + nav opacity/blur) in this session
       window.dispatchEvent(new Event(CHANGE_EVENT));
       message.success(t('已保存并应用'));
     } catch {

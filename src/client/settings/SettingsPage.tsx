@@ -146,7 +146,7 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: 4, maxWidth: 1100 }}>
+    <div style={{ padding: 4, width: '100%' }}>
       {/* form: 工作区外观 / 顶部导航栏 / 侧边导航栏 as three horizontal columns */}
       <AppForm app={cfg.app} onChange={(app) => setCfg({ ...cfg, app })} uploadImage={uploadImage} uploadFont={uploadFont} />
 

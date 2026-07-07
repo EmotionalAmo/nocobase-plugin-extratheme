@@ -91,15 +91,19 @@ export const SettingsPage: React.FC = () => {
     const base = (theme as any)?.token || (defaultTheme as any)?.token || {};
     const native = (defaultTheme as any)?.token || {};
     const built = buildThemeConfig(app, base, native);
+    // finalConfig may adopt the existing record's display name so a theme-editor
+    // rename (e.g. → "Modern") is NOT clobbered back on every plugin save.
+    let finalConfig: any = built;
     try {
       const list = await api.resource('themeConfig').list({ filter: { uid: THEME_UID }, pageSize: 1 });
       const existing = list?.data?.data?.[0];
       let id = existing?.id;
+      if (existing?.config?.name) finalConfig = { ...built, name: existing.config.name };
       if (existing) {
-        await api.resource('themeConfig').update({ filterByTk: id, values: { config: built, default: true, optional: true } });
+        await api.resource('themeConfig').update({ filterByTk: id, values: { config: finalConfig, default: true, optional: true } });
       } else {
         const created = await api.resource('themeConfig').create({
-          values: { config: built, optional: true, isBuiltIn: false, uid: THEME_UID, default: true },
+          values: { config: finalConfig, optional: true, isBuiltIn: false, uid: THEME_UID, default: true },
         });
         id = created?.data?.data?.id;
       }
@@ -108,7 +112,7 @@ export const SettingsPage: React.FC = () => {
       /* theme-editor off / no perms — fall through to in-session setTheme */
     }
     try {
-      setTheme?.(built as any);
+      setTheme?.(finalConfig as any);
     } catch {
       /* not inside GlobalThemeProvider (shouldn't happen in /admin) */
     }

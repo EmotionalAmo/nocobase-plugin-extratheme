@@ -115,5 +115,7 @@ export function buildThemeConfig(
     }
   }
 
-  return { name: 'ExtraTheme', token, components: { ...KEEP_OPAQUE_COMPONENTS }, cssVar: true };
+  // 'Modern' is only the DEFAULT display name for a fresh record; applyTheme preserves
+  // an admin's theme-editor rename on subsequent saves (never clobbers it back).
+  return { name: 'Modern', token, components: { ...KEEP_OPAQUE_COMPONENTS }, cssVar: true };
 }

@@ -157,6 +157,43 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
   });
 });
 
+describe('SECURITY: no config value breaks out of the injected stylesheet', () => {
+  const breakout = 'red;} body::before{position:fixed;inset:0;background:url(//attacker.example/beacon)} .x{color:red';
+  it('nav header color breakout -> neutralized (transparent), no injected rule', () => {
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: breakout, opacity: 50, style: 'solid', blur: 0 } } }), SEL);
+    expect(css).not.toContain('body::before');
+    expect(css).not.toContain('attacker.example');
+    expect(css).toContain('background:transparent!important;');
+  });
+  it('sider color breakout -> neutralized', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, color: breakout, opacity: 50 } } }), SEL);
+    expect(css).not.toContain('body::before');
+    expect(css).not.toContain('attacker.example');
+  });
+  it('background color / gradient / image-url breakouts -> no injected rules', () => {
+    const c1 = generateStylesheet(mergeConfig({ app: { enabled: true, background: { type: 'color', color: breakout } as any } }), SEL);
+    const c2 = generateStylesheet(mergeConfig({ app: { enabled: true, background: { type: 'gradient', gradient: { angle: '9);}html{}x{' as any, colors: ['red)} body::after{content:"X"', '#00f'] } } as any } }), SEL);
+    const c3 = generateStylesheet(mergeConfig({ app: { enabled: true, background: { type: 'image', image: { url: 'x");}html{}body{background:url(//evil', fit: 'cover' } } as any } }), SEL);
+    [c1, c2, c3].forEach((css) => {
+      expect(css).not.toContain('attacker.example');
+      expect(css).not.toContain('body::after');
+      expect(css).not.toContain('");}');
+      expect(css).not.toContain('html{}');
+    });
+  });
+  it('blur breakout string -> no injection (numeric gate + safeNum coercion)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: '#001529', opacity: 50, style: 'frosted', blur: '5);}body{x:1' as any } } }), SEL);
+    expect(css).not.toContain('body{x:1'); // never reaches the stylesheet
+    expect(css).not.toContain('backdrop-filter'); // non-numeric blur fails the >0 gate → not emitted
+  });
+  it('uploaded font format breakout -> dropped (allow-list)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/f.woff2', name: 'X', format: 'woff2") ;} body{x:1} @font-face{src:url(//evil' as any } } } }), SEL);
+    expect(css).not.toContain('body{x:1');
+    expect(css).not.toContain('//evil');
+    expect(css).toContain('format("woff2")'); // derived from the url, not the raw format
+  });
+});
+
 describe('isAppActive', () => {
   it('false when all off', () => expect(isAppActive(mergeConfig({}).app)).toBe(false));
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));

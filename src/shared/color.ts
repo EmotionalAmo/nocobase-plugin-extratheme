@@ -53,20 +53,44 @@ function parseRgb(color: string): [number, number, number] | null {
   return null;
 }
 
-/** Drop any alpha and return a solid 'rgb(r,g,b)' — used to capture the theme's nav
- * color as a stable base (so re-deriving never double-alphas). Falls back to input. */
+/**
+ * Strict allow-list for a CSS color that gets interpolated into a declaration. Accepts
+ * only #hex (3/4/6/8), rgb()/rgba()/hsl()/hsla() built from digits/%/./,//space, or a
+ * bare word (named color — no breakout chars possible). ANYTHING else → 'transparent'.
+ * This is the security boundary: config values are admin-writable but the compiled CSS
+ * is served to every visitor incl. the anonymous sign-in page, so a value like
+ * `red}body::before{...}` MUST NOT reach the stylesheet.
+ */
+export function safeCssColor(color: string): string {
+  const c = (color || '').trim();
+  if (/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c)) return c;
+  if (/^(rgb|rgba|hsl|hsla)\(\s*[\d.,%\s/]+\)$/i.test(c)) return c;
+  if (/^[a-z]+$/i.test(c)) return c; // bare word = named color (letters only, inert)
+  return 'transparent';
+}
+
+/** Coerce to a finite number (default 0) — for numeric CSS values interpolated raw. */
+export function safeNum(v: any, def = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : def;
+}
+
+/** Drop any alpha and return a solid 'rgb(r,g,b)'. Unparseable → safe black (never raw). */
 export function toSolidRgb(color: string): string {
   const rgb = parseRgb(color);
-  return rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : (color || '').trim();
+  return rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : 'rgb(0,0,0)';
 }
 
-/** Apply an alpha to ANY color (hex/rgb/rgba); the RGB is preserved. Falls back to input. */
+/** Apply an alpha to a hex/rgb/rgba color; RGB preserved. Unparseable → 'transparent'
+ * (never echo the raw value into the declaration — that was a CSS-injection sink). */
 export function withAlpha(color: string, alpha: number): string {
   const rgb = parseRgb(color);
-  return rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})` : (color || '').trim();
+  return rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${safeNum(alpha)})` : 'transparent';
 }
 
-/** Resolve a BackgroundConfig into CSS background-* values. */
+/** Resolve a BackgroundConfig into CSS background-* values. Every interpolated value is
+ * sanitized (color → safeCssColor, angle → safeNum, url → sanitizeCssUrl) so nothing
+ * can break out of the injected declaration. */
 export function buildBackground(bg: BackgroundConfig): {
   image: string;
   size: string;
@@ -75,23 +99,23 @@ export function buildBackground(bg: BackgroundConfig): {
 } {
   const none = { image: 'transparent', size: 'auto', repeat: 'no-repeat', position: 'center' };
   if (!bg || bg.type === 'none') return none;
-  if (bg.type === 'color') return { image: bg.color, size: 'auto', repeat: 'no-repeat', position: 'center' };
+  if (bg.type === 'color') return { image: safeCssColor(bg.color), size: 'auto', repeat: 'no-repeat', position: 'center' };
   if (bg.type === 'gradient') {
-    const stops = (bg.gradient.colors || []).join(',');
+    const stops = (bg.gradient.colors || []).map(safeCssColor).join(',');
     return {
-      image: `linear-gradient(${bg.gradient.angle}deg,${stops})`,
+      image: `linear-gradient(${safeNum(bg.gradient.angle)}deg,${stops})`,
       size: 'cover',
       repeat: 'no-repeat',
-      position: bg.image?.position || 'center',
+      position: 'center',
     };
   }
   // image
-  const url = bg.image?.url;
+  const url = sanitizeCssUrl(bg.image?.url || '');
   if (!url) return none;
   const fit = bg.image.fit;
   const repeat = fit === 'repeat' ? 'repeat' : 'no-repeat';
   // cover|contain are valid background-size keywords; stretch = 100% 100% (non-uniform
   // fill, distorts); repeat = natural size (auto) tiled.
-  const size = fit === 'repeat' ? 'auto' : fit === 'stretch' ? '100% 100%' : fit;
-  return { image: `url("${url}")`, size, repeat, position: bg.image.position || 'center' };
+  const size = fit === 'repeat' ? 'auto' : fit === 'stretch' ? '100% 100%' : fit === 'contain' ? 'contain' : 'cover';
+  return { image: `url("${url}")`, size, repeat, position: 'center' };
 }

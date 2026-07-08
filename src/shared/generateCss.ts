@@ -1,5 +1,8 @@
 import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
-import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha } from './color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha, safeNum } from './color';
+
+/** @font-face src format() allow-list — reject anything else so a crafted value can't break out. */
+const FONT_FORMATS = ['woff2', 'woff', 'truetype', 'opentype'];
 
 /**
  * With the token-based redesign, surface COLORS come from the antd theme
@@ -18,8 +21,9 @@ import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sani
 function bgDecl(bg: BackgroundConfig): string {
   const b = buildBackground(bg);
   let image = b.image;
-  if (bg.dim > 0 && bg.type !== 'none') {
-    const d = hexToRgba('#000000', bg.dim / 100);
+  const dim = safeNum(bg.dim);
+  if (dim > 0 && bg.type !== 'none') {
+    const d = hexToRgba('#000000', dim / 100);
     image = `linear-gradient(${d},${d}),${b.image}`;
   }
   // NOTE: the `background` shorthand (with !important) implicitly resets
@@ -44,7 +48,8 @@ function scopedList(scope: string, list: string): string {
 }
 
 function blur(px: number): string {
-  return `backdrop-filter:blur(${px}px);-webkit-backdrop-filter:blur(${px}px);`;
+  const n = safeNum(px); // coerce — px is interpolated raw into blur(<n>px)
+  return `backdrop-filter:blur(${n}px);-webkit-backdrop-filter:blur(${n}px);`;
 }
 
 function appCss(app: AppConfig, s: Selectors['app']): string {
@@ -92,7 +97,9 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     if (font.source === 'upload' && font.upload?.url) {
       const name = sanitizeFontFamily(font.upload.name || '').replace(/["']/g, '') || 'ExtraTheme Font';
       const url = sanitizeCssUrl(font.upload.url);
-      const fmt = font.upload.format || fontFormatFromUrl(font.upload.url);
+      // allow-list the format: use the config value only if valid, else derive from the
+      // url (fontFormatFromUrl already maps to known formats) — never echo a raw value.
+      const fmt = FONT_FORMATS.includes(font.upload.format) ? font.upload.format : fontFormatFromUrl(font.upload.url);
       if (url) {
         out.push(`@font-face{font-family:"${name}";src:url("${url}")${fmt ? ` format("${fmt}")` : ''};font-display:swap;}`);
         out.push(`${scope}{font-family:"${name}"!important;}`);

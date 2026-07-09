@@ -1,0 +1,43 @@
+{
+  "name": "@emotionalamo/plugin-extratheme",
+  "version": "0.0.7",
+  "displayName": "ExtraTheme",
+  "displayName.zh-CN": "主题增强",
+  "description": "Global theme-enhancement plugin for NocoBase 2.x: custom background (image/gradient/color + fit modes), transparency, frosted-glass, top/side navigation styling, global font (system/custom/uploaded), and macOS-style scrollbar. Configured globally in one settings page; disabled by default.",
+  "description.zh-CN": "NocoBase 2.x 全局主题增强插件：自定义背景（图片/渐变/纯色 + 铺法）、透明度、毛玻璃、顶部/侧边导航栏样式、全局字体（系统/自定义/上传）、仿 macOS 滚动条。设置页统一全局配置，默认关闭。",
+  "keywords": [
+    "nocobase",
+    "nocobase-plugin",
+    "theme",
+    "appearance",
+    "background",
+    "glassmorphism",
+    "customization"
+  ],
+  "homepage": "https://github.com/EmotionalAmo/nocobase-plugin-extratheme#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmotionalAmo/nocobase-plugin-extratheme.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EmotionalAmo/nocobase-plugin-extratheme/issues"
+  },
+  "license": "AGPL-3.0",
+  "main": "dist/server/index.js",
+  "dependencies": {},
+  "peerDependencies": {
+    "@nocobase/actions": "2.x",
+    "@nocobase/client": "2.x",
+    "@nocobase/client-v2": "2.x",
+    "@nocobase/database": "2.x",
+    "@nocobase/server": "2.x"
+  },
+  "nocobase": {
+    "supportedVersions": [
+      "2.x"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,6 @@
+# local dev tooling — not part of the published plugin
+deploy.sh
+
+# build output / deps
+dist/
+node_modules/

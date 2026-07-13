@@ -35,6 +35,25 @@ yarn pm enable @emotionalamo/plugin-extratheme
 
 ---
 
+## Troubleshooting
+
+**After enabling, the browser shows `Script error for "@emotionalamo/plugin-extratheme"`.**
+This is a NocoBase deployment behavior, **not a plugin fault**, and it affects **every**
+plugin the same way. In production / Docker mode NocoBase serves plugin client bundles from
+a statics cache that is (re)built on **app startup**, so a freshly-enabled plugin's bundle
+is not available until the app restarts. NocoBase normally restarts automatically on enable;
+if your deployment does not (e.g. the app is not process-managed), **restart the app and
+hard-refresh** the browser:
+
+```bash
+docker restart <your-nocobase-container>   # then Cmd/Ctrl+Shift+R
+```
+
+To confirm this is the cause: `/api/pm:listEnabled` advertises the plugin's bundle URL —
+fetching that URL returns **404 before** the restart and **200 after**.
+
+---
+
 ## Scope
 
 | Surface | Themed | Notes |

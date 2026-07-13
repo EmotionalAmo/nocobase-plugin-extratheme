@@ -30,6 +30,23 @@ yarn pm enable @emotionalamo/plugin-extratheme
 
 ---
 
+## 排障
+
+**启用后浏览器报 `Script error for "@emotionalamo/plugin-extratheme"`。**
+这是 NocoBase 的部署行为、**并非插件问题**,且对**所有插件**一视同仁。生产 / Docker 模式下,
+NocoBase 从一个在**应用启动时(重)构建的静态缓存**下发插件前端 bundle,所以刚启用的插件 bundle
+要等应用重启后才可用。NocoBase 通常会在启用时自动重启;若你的部署没有自动重启(如应用未被进程
+管理器托管),**手动重启应用并硬刷新浏览器**:
+
+```bash
+docker restart <你的-nocobase-容器>   # 然后 Cmd/Ctrl+Shift+R
+```
+
+判定就是它:`/api/pm:listEnabled` 里通告了该插件的 bundle URL——重启**前**取它是 **404**,
+重启**后**是 **200**。
+
+---
+
 ## 作用范围
 
 | 界面 | 是否美化 | 说明 |

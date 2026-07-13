@@ -49,6 +49,10 @@ export const DEFAULT_APP: AppConfig = {
   font: { enabled: false, source: 'system', family: FONT_PRESETS[1].value, upload: { url: '', name: '', format: '' } },
   // scrollbar off by default (native); when enabled, 'always' shows / 'hidden' hides.
   scrollbar: { enabled: false, mode: 'always' },
+  // hide arbitrary elements by CSS selector (e.g. the global AI entry). Off by default;
+  // the default selector targets the AI entry's emotion-hash class (user-editable — the
+  // hash changes across NocoBase builds).
+  hide: { enabled: false, selector: '.css-1hc929u' },
 };
 
 /** Starting values for the 登录页外观 group (independent of app). */

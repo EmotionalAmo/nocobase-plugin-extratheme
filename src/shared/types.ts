@@ -54,6 +54,15 @@ export interface ScrollbarConfig {
   mode: ScrollbarMode; // 'always' = slim always-visible bar; 'hidden' = no scrollbar (content still scrolls)
 }
 
+export interface HideConfig {
+  enabled: boolean; // hide matching elements on/off (independent of the other sections)
+  // A CSS selector LIST (comma-separated) whose matches get `display:none`. Used to hide
+  // e.g. the global AI entry. Kept user-editable on purpose: the AI entry's class is an
+  // emotion hash (`.css-…`) that changes across NocoBase builds, so it must be fixable
+  // without a plugin release.
+  selector: string;
+}
+
 export interface AppConfig {
   enabled: boolean;
   background: BackgroundConfig;
@@ -62,6 +71,7 @@ export interface AppConfig {
   sider: NavConfig;
   font: FontConfig;
   scrollbar: ScrollbarConfig;
+  hide: HideConfig;
 }
 
 export interface LoginCard {

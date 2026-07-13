@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, toSolidRgb, withAlpha, safeCssColor, safeNum, mimeFromFilename, isEphemeralUrl } from '../color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, toSolidRgb, withAlpha, safeCssColor, safeNum, mimeFromFilename, isEphemeralUrl, sanitizeCssSelector } from '../color';
 
 describe('hexToRgba', () => {
   it('converts 6-digit hex', () => {
@@ -198,6 +198,32 @@ describe('sanitizeCssUrl', () => {
     const out = sanitizeCssUrl('data:image/png;base64,AA AA\n);}x{');
     expect(out).not.toContain(')');
     expect(out).not.toContain('}');
+  });
+});
+
+describe('sanitizeCssSelector (for the hide-elements feature)', () => {
+  it('passes a real selector (emotion hash class) through intact', () => {
+    expect(sanitizeCssSelector('.css-1hc929u')).toBe('.css-1hc929u');
+  });
+  it('passes a compound/list selector through (comma, combinators, :not, attr)', () => {
+    expect(sanitizeCssSelector('.a, .b > .c:not(.d)')).toBe('.a, .b > .c:not(.d)');
+    expect(sanitizeCssSelector('[data-testid="ai"] * ~ .x')).toBe('[data-testid="ai"] * ~ .x');
+  });
+  it('collapses newlines/tabs to spaces and trims', () => {
+    expect(sanitizeCssSelector('  .a\n\t.b  ')).toBe('.a .b');
+  });
+  it('empty/nullish -> ""', () => {
+    expect(sanitizeCssSelector('')).toBe('');
+    expect(sanitizeCssSelector(undefined as any)).toBe('');
+  });
+  it('SECURITY: any rule-breakout char rejects the whole selector -> "" (never partial)', () => {
+    // these would let a value escape `<selector>{display:none}` and inject arbitrary CSS
+    ['x}body{background:red', 'x{color:red', 'a;background:red', 'a<b', 'a\\b', '.a/*x*/', '*/.b'].forEach((s) =>
+      expect(sanitizeCssSelector(s)).toBe(''),
+    );
+  });
+  it('caps length at 500', () => {
+    expect(sanitizeCssSelector('.a'.repeat(400)).length).toBe(500);
   });
 });
 

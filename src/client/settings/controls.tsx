@@ -1,6 +1,6 @@
 import React from 'react';
 import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button } from 'antd';
-import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig } from '../../shared/types';
+import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig, HideConfig } from '../../shared/types';
 import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { isEphemeralUrl } from '../../shared/color';
 import { useT } from '../useT';
@@ -214,6 +214,27 @@ const ScrollbarGroup: React.FC<{ scrollbar: ScrollbarConfig; onChange: (s: Scrol
   );
 };
 
+// Hide arbitrary elements (e.g. the global AI entry) by CSS selector. Own on/off switch,
+// independent of the master switch. The selector is user-editable ON PURPOSE: the AI entry's
+// `.css-…` class is an emotion hash that changes across NocoBase builds, so a fixed selector
+// would silently stop matching after an upgrade.
+const HideGroup: React.FC<{ hide: HideConfig; onChange: (h: HideConfig) => void }> = ({ hide, onChange }) => {
+  const t = useT();
+  const set = (p: Partial<HideConfig>) => onChange({ ...hide, ...p });
+  return (
+    <Group title={t('隐藏元素')} right={<Switch size="small" checked={hide.enabled} onChange={(v) => set({ enabled: v })} />}>
+      <div style={dimStyle(hide.enabled)}>
+        <Row label={t('CSS 选择器')}>
+          <Input value={hide.selector} placeholder=".css-1hc929u" onChange={(e) => set({ selector: e.target.value })} />
+        </Row>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+          {t('隐藏匹配到的元素（如 AI 入口）。可填多个,用逗号分隔。注意：.css-xxxx 是 NocoBase 自动生成的哈希类,升级后可能变化——失效时来这里更新即可,无需换插件版本。')}
+        </div>
+      </div>
+    </Group>
+  );
+};
+
 // Nav = one base COLOR (the theme editor can't set colorBgHeader, so the plugin owns it)
 // + the enhancement layer: style + opacity + blur. Menu TEXT color stays theme-managed.
 const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
@@ -413,8 +434,9 @@ export const AppForm: React.FC<{
           <BackgroundGroup first bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
           <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
         </div>
-        {/* scrollbar is a global preference, independent of the workspace switch (not dimmed) */}
+        {/* scrollbar + hide are global preferences, independent of the workspace switch (not dimmed) */}
         <ScrollbarGroup scrollbar={app.scrollbar} onChange={(scrollbar) => onChange({ ...app, scrollbar })} />
+        <HideGroup hide={app.hide} onChange={(hide) => onChange({ ...app, hide })} />
       </Panel>
       {/* middle column: top + side nav stacked vertically */}
       <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 20 }}>

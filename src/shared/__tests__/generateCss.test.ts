@@ -201,4 +201,24 @@ describe('isAppActive', () => {
   it('true when only font on', () => expect(isAppActive(mergeConfig({ app: { font: { enabled: true } } }).app)).toBe(true));
   it('true when scrollbar enabled', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { enabled: true, mode: 'hidden' } } }).app)).toBe(true));
   it('false when scrollbar disabled and rest off', () => expect(isAppActive(mergeConfig({ app: { scrollbar: { enabled: false, mode: 'always' } } }).app)).toBe(false));
+  it('true when hide enabled', () => expect(isAppActive(mergeConfig({ app: { hide: { enabled: true, selector: '.x' } } }).app)).toBe(true));
+});
+
+describe('hide-elements (global display:none by selector)', () => {
+  it('injects an UNSCOPED display:none rule when enabled', () => {
+    const css = generateStylesheet(mergeConfig({ app: { hide: { enabled: true, selector: '.css-1hc929u' } } }), SEL);
+    expect(css).toContain('.css-1hc929u{display:none!important;}');
+    expect(css).not.toContain('body.extra-theme-app-on .css-1hc929u'); // global, not body-scoped
+  });
+  it('emits nothing when disabled (default)', () => {
+    expect(generateStylesheet(mergeConfig({}), SEL)).not.toContain('display:none');
+  });
+  it('emits nothing when enabled but the selector is empty', () => {
+    expect(generateStylesheet(mergeConfig({ app: { hide: { enabled: true, selector: '' } } }), SEL)).not.toContain('display:none');
+  });
+  it('SECURITY: a rule-breakout selector is rejected (nothing injected)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { hide: { enabled: true, selector: 'x}body{background:red' } } }), SEL);
+    expect(css).not.toContain('display:none');
+    expect(css).not.toContain('background:red');
+  });
 });

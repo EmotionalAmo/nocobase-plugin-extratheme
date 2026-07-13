@@ -1,6 +1,6 @@
 {
   "name": "@emotionalamo/plugin-extratheme",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "displayName": "ExtraTheme",
   "displayName.zh-CN": "主题增强",
   "description": "Global theme-enhancement plugin for NocoBase 2.x: custom background (image/gradient/color + fit modes), transparency, frosted-glass, top/side navigation styling, global font (system/custom/uploaded), and macOS-style scrollbar. Configured globally in one settings page; disabled by default.",

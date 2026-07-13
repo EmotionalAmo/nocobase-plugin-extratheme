@@ -1,5 +1,5 @@
 import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
-import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha, safeNum } from './color';
+import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha, safeNum, sanitizeCssSelector } from './color';
 
 /** @font-face src format() allow-list — reject anything else so a crafted value can't break out. */
 const FONT_FORMATS = ['woff2', 'woff', 'truetype', 'opentype'];
@@ -147,12 +147,27 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     }
   }
 
+  // Hide arbitrary elements by selector (e.g. the global AI entry). GLOBAL (unscoped) so it
+  // applies regardless of the workspace switch; the selector is sanitized so it can't break
+  // out of the `<sel>{…}` rule.
+  if (app.hide?.enabled) {
+    const sel = sanitizeCssSelector(app.hide.selector || '');
+    if (sel) out.push(`${sel}{display:none!important;}`);
+  }
+
   return out.join('\n');
 }
 
-/** True when any app-scope section (bg/card, header, sider, font, or scrollbar) is on. */
+/** True when any app-scope section (bg/card, header, sider, font, scrollbar, or hide) is on. */
 export function isAppActive(app: AppConfig): boolean {
-  return !!(app.enabled || app.header.enabled || app.sider.enabled || app.font?.enabled || app.scrollbar?.enabled);
+  return !!(
+    app.enabled ||
+    app.header.enabled ||
+    app.sider.enabled ||
+    app.font?.enabled ||
+    app.scrollbar?.enabled ||
+    app.hide?.enabled
+  );
 }
 
 /** Thin stylesheet: page background + frosted blur (surface colors are antd tokens). */

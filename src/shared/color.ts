@@ -68,6 +68,19 @@ export function isEphemeralUrl(url: string): boolean {
   );
 }
 
+/** Sanitize a CSS SELECTOR before it's interpolated as `<selector>{…}` in the globally
+ * injected stylesheet (served to every visitor incl. the anonymous sign-in page). A real
+ * selector never contains rule-breakout chars, so if the value carries any of `{ } ; < \`
+ * or a `/*`…`*​/` comment marker, REJECT the whole thing (→ '') rather than trying to
+ * repair it. Everything a selector needs (`. # [ ] = " ' : ( ) > ~ + * , - _` + space)
+ * passes through. Length-capped. Supports a comma-separated selector LIST. */
+export function sanitizeCssSelector(sel: string): string {
+  const s = (sel || '').replace(/[\r\n\t]+/g, ' ').trim();
+  if (!s) return '';
+  if (/[{};<\\]/.test(s) || s.includes('/*') || s.includes('*/')) return '';
+  return s.slice(0, 500);
+}
+
 /** '#ffffff', 0.9 -> 'rgba(255,255,255,0.9)'. Accepts 3/6-digit hex, with or without '#'. */
 export function hexToRgba(hex: string, alpha: number): string {
   let h = (hex || '').replace('#', '');

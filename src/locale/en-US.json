@@ -75,6 +75,9 @@
   "订单": "Orders",
   "报表": "Reports",
   "内容卡片": "Content card",
+  "隐藏元素": "Hide elements",
+  "CSS 选择器": "CSS selector",
+  "隐藏匹配到的元素（如 AI 入口）。可填多个,用逗号分隔。注意：.css-xxxx 是 NocoBase 自动生成的哈希类,升级后可能变化——失效时来这里更新即可,无需换插件版本。": "Hide elements matching the selector (e.g. the AI entry). Comma-separate multiple selectors. Note: a .css-xxxx class is a NocoBase-generated hash that can change across upgrades — if it stops matching, just update it here (no plugin release needed).",
   "欢迎登录": "Welcome back",
   "登录": "Sign in"
 }

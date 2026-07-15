@@ -52,19 +52,23 @@ function blur(px: number): string {
   return `backdrop-filter:blur(${n}px);-webkit-backdrop-filter:blur(${n}px);`;
 }
 
-/** Extra CSS for the 'material' nav style: a self-contained SVG fractal-noise GRAIN (the
- * etched-glass texture a plain blur lacks; feTurbulence data-URI = CSP-safe, no external
- * asset) whose alpha is driven by `texture` (0–100), plus a top sheen + soft depth shadow.
- * The grain is a `background-image` emitted AFTER the `background` shorthand so it isn't
- * reset. `texture` is coerced+clamped, so it's safe to interpolate. '' for other styles. */
+/** Extra CSS for the 水纹玻璃 ('material') style: a SEAMLESS grayscale water-caustics texture
+ * as a `background-image`. It's an SVG `feTurbulence type=turbulence` + `stitchTiles=stitch`
+ * (so it tiles with no visible seams), rendered 1:1 over a big tile (so it's not stretched
+ * soft nor seam-repeated) — a real "water ripple" look, unlike a plain blur. Backdrop
+ * displacement was tried and rejected: it refracts the BACKDROP, so over a smooth sky it's
+ * invisible. The grain contrast/depth is driven by `texture` (0–100 → feFuncA slope). The
+ * image is emitted AFTER the `background` shorthand so it isn't reset (repeat/size stay at the
+ * shorthand's initials: repeat/auto). `texture` is coerced+clamped → safe to interpolate.
+ * CSP-safe (self-contained data-URI, no external asset). '' for other styles. */
 function materialExtras(style: NavStyle, texture: number): string {
   if (style !== 'material') return '';
-  const a = Math.max(0, Math.min(1, safeNum(texture, 40) / 100)).toFixed(2);
-  const noise =
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='" +
+  const a = Math.max(0, Math.min(1, safeNum(texture, 65) / 100)).toFixed(2);
+  const water =
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.009 0.016' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='" +
     a +
-    "'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E\")";
-  return `background-image:${noise}!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 2px 14px rgba(15,23,42,0.06);`;
+    "'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E\")";
+  return `background-image:${water}!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 2px 14px rgba(15,23,42,0.06);`;
 }
 
 function appCss(app: AppConfig, s: Selectors['app']): string {

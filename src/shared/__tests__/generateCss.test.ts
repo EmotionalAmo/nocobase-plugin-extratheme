@@ -194,22 +194,22 @@ describe('SECURITY: no config value breaks out of the injected stylesheet', () =
   });
 });
 
-describe('material nav style (etched-glass texture, not just blur)', () => {
-  it('material header adds the frost-noise grain + sheen; plain frosted does not', () => {
-    const mat = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', color: '#ffffff', opacity: 50, blur: 20 } } }), SEL);
-    expect(mat).toContain('feTurbulence'); // the SVG grain texture
+describe('material nav style = 水纹玻璃 (seamless water-caustics texture, not just blur)', () => {
+  it('material header adds a seamless water texture (turbulence+stitch) + sheen; frosted does not', () => {
+    const mat = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', color: '#ffffff', opacity: 50, blur: 10 } } }), SEL);
     expect(mat).toContain('background-image:url("data:image/svg+xml');
+    expect(mat).toContain("type='turbulence'"); // water veins, not fine grain
+    expect(mat).toContain("stitchTiles='stitch'"); // seamless (no vertical seams)
     expect(mat).toContain('box-shadow:inset 0 1px 0'); // top sheen
-    expect(mat).toContain('backdrop-filter:blur(20px)'); // still blurs behind
-    const frosted = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 50, blur: 20 } } }), SEL);
-    expect(frosted).not.toContain('feTurbulence');
-    expect(frosted).toContain('backdrop-filter:blur(20px)');
+    expect(mat).toContain('backdrop-filter:blur(10px)'); // still blurs behind
+    const frosted = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 50, blur: 10 } } }), SEL);
+    expect(frosted).not.toContain('turbulence');
+    expect(frosted).toContain('backdrop-filter:blur(10px)');
   });
-  it('material sider also gets the grain', () => {
-    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'material', color: '#ffffff', opacity: 60, blur: 16 } } }), SEL);
-    expect(css).toContain('feTurbulence');
+  it('material sider also gets the water texture', () => {
+    expect(generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'material', blur: 12 } } }), SEL)).toContain("type='turbulence'");
   });
-  it('the texture slider drives the grain alpha (feFuncA slope), coerced+clamped', () => {
+  it('水纹强度 (texture) drives the grain alpha (feFuncA slope), coerced+clamped', () => {
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 80 } } }), SEL)).toContain("slope='0.80'");
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 10 } } }), SEL)).toContain("slope='0.10'");
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 999 } } }), SEL)).toContain("slope='1.00'"); // clamped

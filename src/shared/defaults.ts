@@ -44,8 +44,8 @@ export const DEFAULT_APP: AppConfig = {
   // header / sider / font are independent of the 工作区外观 (background+card) switch;
   // all default OFF so a fresh install changes nothing. font.family defaults to the
   // 无衬线 stack so flipping the switch on shows an immediate effect.
-  header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark', texture: 40 },
-  sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark', texture: 40 },
+  header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark', texture: 65 },
+  sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark', texture: 65 },
   font: { enabled: false, source: 'system', family: FONT_PRESETS[1].value, upload: { url: '', name: '', format: '' } },
   // scrollbar off by default (native); when enabled, 'always' shows / 'hidden' hides.
   scrollbar: { enabled: false, mode: 'always' },

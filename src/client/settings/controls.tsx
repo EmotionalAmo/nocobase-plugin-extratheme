@@ -254,6 +254,7 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
           options={[
             { label: t('实色'), value: 'solid' },
             { label: t('毛玻璃'), value: 'frosted' },
+            { label: t('质感玻璃'), value: 'material' },
           ]}
         />
       </Row>
@@ -261,7 +262,7 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
         <Slider min={0} max={100} value={nav.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
       <Row label={t('背景模糊')} value={`${nav.blur}px`}>
-        <Slider min={0} max={40} value={nav.blur} disabled={nav.style !== 'frosted'} onChange={(v) => set({ blur: v })} />
+        <Slider min={0} max={40} value={nav.blur} disabled={nav.style === 'solid'} onChange={(v) => set({ blur: v })} />
       </Row>
     </Group>
   );

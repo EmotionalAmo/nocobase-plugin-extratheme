@@ -1,4 +1,4 @@
-import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
+import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig, NavStyle } from './types';
 import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha, safeNum, sanitizeCssSelector } from './color';
 
 /** @font-face src format() allow-list — reject anything else so a crafted value can't break out. */
@@ -52,6 +52,20 @@ function blur(px: number): string {
   return `backdrop-filter:blur(${n}px);-webkit-backdrop-filter:blur(${n}px);`;
 }
 
+// A self-contained SVG fractal-noise texture (grayscale, low-alpha) for the 'material' nav
+// style — the fine etched-glass GRAIN that a plain Gaussian blur lacks. Data-URI = CSP-safe,
+// no external asset. Trusted plugin constant (not user config) → no sanitizing needed.
+const FROST_NOISE =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.15'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E\")";
+
+/** Extra CSS for the 'material' nav style: the grain overlay (a `background-image`, which
+ * MUST come after the `background` shorthand so the shorthand doesn't reset it) + a top
+ * sheen + a soft depth shadow. '' for other styles. */
+function materialExtras(style: NavStyle): string {
+  if (style !== 'material') return '';
+  return `background-image:${FROST_NOISE}!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 2px 14px rgba(15,23,42,0.06);`;
+}
+
 function appCss(app: AppConfig, s: Selectors['app']): string {
   const scope = 'body.extra-theme-app-on';
   const out: string[] = [];
@@ -83,8 +97,11 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   // real pro-layout header (and the outer wrapper for robustness).
   if (app.header.enabled) {
     const headerBg = withAlpha(app.header.color, app.header.opacity / 100);
-    const glass = app.header.style === 'frosted' && app.header.blur > 0 ? blur(app.header.blur) : '';
-    out.push(`${scope} .ant-layout-header,${scope} .ant-pro-layout-header{background:${headerBg}!important;${glass}}`);
+    const frosted = app.header.style === 'frosted' || app.header.style === 'material';
+    const glass = frosted && app.header.blur > 0 ? blur(app.header.blur) : '';
+    out.push(
+      `${scope} .ant-layout-header,${scope} .ant-pro-layout-header{background:${headerBg}!important;${glass}${materialExtras(app.header.style)}}`,
+    );
   }
 
   // Global font. The antd token (buildTheme) covers antd text; setting font-family on
@@ -117,10 +134,10 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
   // is left to the theme (not overridden).
   if (app.sider.enabled) {
     const siderBg = withAlpha(app.sider.color, app.sider.opacity / 100);
-    const glass = app.sider.style === 'frosted' && app.sider.blur > 0 ? blur(app.sider.blur) : '';
+    const glass = (app.sider.style === 'frosted' || app.sider.style === 'material') && app.sider.blur > 0 ? blur(app.sider.blur) : '';
     out.push(
       `${scope} .ant-layout-sider{background:transparent!important;}` +
-        `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}}` +
+        `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}${materialExtras(app.sider.style)}}` +
         `${scope} .ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +

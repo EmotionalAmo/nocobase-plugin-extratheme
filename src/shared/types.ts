@@ -7,7 +7,7 @@
  */
 
 export type BgType = 'none' | 'color' | 'gradient' | 'image';
-export type NavStyle = 'solid' | 'frosted';
+export type NavStyle = 'solid' | 'frosted' | 'material';
 export type TextTone = 'dark' | 'light';
 export type BgFit = 'cover' | 'contain' | 'stretch' | 'repeat';
 

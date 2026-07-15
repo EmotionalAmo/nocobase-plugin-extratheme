@@ -194,6 +194,23 @@ describe('SECURITY: no config value breaks out of the injected stylesheet', () =
   });
 });
 
+describe('material nav style (etched-glass texture, not just blur)', () => {
+  it('material header adds the frost-noise grain + sheen; plain frosted does not', () => {
+    const mat = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', color: '#ffffff', opacity: 50, blur: 20 } } }), SEL);
+    expect(mat).toContain('feTurbulence'); // the SVG grain texture
+    expect(mat).toContain('background-image:url("data:image/svg+xml');
+    expect(mat).toContain('box-shadow:inset 0 1px 0'); // top sheen
+    expect(mat).toContain('backdrop-filter:blur(20px)'); // still blurs behind
+    const frosted = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 50, blur: 20 } } }), SEL);
+    expect(frosted).not.toContain('feTurbulence');
+    expect(frosted).toContain('backdrop-filter:blur(20px)');
+  });
+  it('material sider also gets the grain', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'material', color: '#ffffff', opacity: 60, blur: 16 } } }), SEL);
+    expect(css).toContain('feTurbulence');
+  });
+});
+
 describe('isAppActive', () => {
   it('false when all off', () => expect(isAppActive(mergeConfig({}).app)).toBe(false));
   it('true when only header on', () => expect(isAppActive(mergeConfig({ app: { header: { enabled: true } } }).app)).toBe(true));

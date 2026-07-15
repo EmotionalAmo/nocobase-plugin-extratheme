@@ -28,15 +28,11 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).not.toMatch(/\.ant-card\{background:rgba/); // card color is a token, not CSS
   });
 
-  it('card glass+blur -> backdrop-filter on .ant-card and .code-block', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: true, card: { glass: true, blur: 12 } } }), SEL);
-    expect(css).toContain('body.extra-theme-app-on .ant-card,body.extra-theme-app-on .code-block{backdrop-filter:blur(12px);');
-    expect(css).toContain('-webkit-backdrop-filter:blur(12px)');
-  });
-
-  it('card glass false -> no card blur', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: true, card: { glass: false } } }), SEL);
+  it('工作区外观 on (no nav) -> content cards get no frosted blur (card transparency delegated to theme editor)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL);
+    // only nav emits blur now; keepNative (default on) emits `backdrop-filter:none` — so guard on `:blur`.
     expect(css).not.toContain('backdrop-filter:blur');
+    expect(css).not.toContain('.code-block'); // no card/code-block frosted rule anymore
   });
 
   it('header on -> theme color at opacity + blur when frosted (independent of workspace switch)', () => {

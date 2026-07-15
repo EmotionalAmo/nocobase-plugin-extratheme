@@ -1,6 +1,6 @@
 import React from 'react';
 import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button } from 'antd';
-import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig, HideConfig, KeepNativeConfig } from '../../shared/types';
+import type { AppConfig, LoginConfig, BackgroundConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig, HideConfig, KeepNativeConfig } from '../../shared/types';
 import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { isEphemeralUrl } from '../../shared/color';
 import { useT } from '../useT';
@@ -161,27 +161,6 @@ const BackgroundGroup: React.FC<{ bg: BackgroundConfig; onChange: (b: Background
       <Row label={t('暗化遮罩')} value={`${bg.dim}%`}>
         <Slider min={0} max={80} value={bg.dim} onChange={(v) => set({ dim: v })} />
       </Row>
-    </Group>
-  );
-};
-
-const CardGroup: React.FC<{ card: CardConfig; onChange: (c: CardConfig) => void }> = ({ card, onChange }) => {
-  const t = useT();
-  const set = (p: Partial<CardConfig>) => onChange({ ...card, ...p });
-  return (
-    <Group title={t('内容区卡片')} right={<Switch size="small" checked={card.glass} onChange={(v) => set({ glass: v })} />}>
-      <div style={dimStyle(card.glass)}>
-        <Row label={t('卡片不透明度')} value={`${card.opacity}%`}>
-          <Slider min={10} max={100} value={card.opacity} onChange={(v) => set({ opacity: v })} />
-        </Row>
-        <Row label={t('背景模糊')} value={`${card.blur}px`}>
-          <Slider min={0} max={40} value={card.blur} onChange={(v) => set({ blur: v })} />
-        </Row>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 12.5, color: '#475569' }}>{t('浅色描边')}</span>
-          <Switch size="small" checked={card.border} onChange={(v) => set({ border: v })} />
-        </div>
-      </div>
     </Group>
   );
 };
@@ -458,7 +437,6 @@ export const AppForm: React.FC<{
       <Panel title={t('工作区外观')} right={<Switch checked={app.enabled} onChange={(v) => onChange({ ...app, enabled: v })} />}>
         <div style={dimStyle(app.enabled)}>
           <BackgroundGroup first bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
-          <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
         </div>
         {/* scrollbar + hide + keep-native are global preferences, independent of the workspace switch (not dimmed) */}
         <ScrollbarGroup scrollbar={app.scrollbar} onChange={(scrollbar) => onChange({ ...app, scrollbar })} />

@@ -40,8 +40,9 @@ export const DEFAULT_APP: AppConfig = {
     image: { url: '', fit: 'cover', position: 'center' },
     dim: 0,
   },
-  card: { glass: true, opacity: 72, blur: 12, border: true },
-  // header / sider / font are independent of the 工作区外观 (background+card) switch;
+  // 内容卡片透明度已交给原生主题编辑器(colorBgContainer),这里不再管理 —— 背景仍通过
+  // colorBgLayout:transparent + 内容区透明 CSS 透出,卡片保持原生不透明。
+  // header / sider / font are independent of the 工作区外观 (background) switch;
   // all default OFF so a fresh install changes nothing. font.family defaults to the
   // 无衬线 stack so flipping the switch on shows an immediate effect.
   header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark', texture: 85 },

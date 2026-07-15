@@ -90,14 +90,12 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     // bottom instead: top:auto + bottom:0 lands the top at the header's bottom in
     // BOTH layouts (top must be auto so bottom+height win over the native top).
     out.push(`${scope} .ant-layout-sider-children{top:auto!important;bottom:0!important;}`);
-    // Make content wrappers + class-less/inline-white block wrappers transparent so
-    // the (token-translucent) surfaces and the page background show through.
+    // Make content wrappers + class-less/inline-white block wrappers transparent so the
+    // page background shows through the layout gaps around the (now opaque) content cards.
+    // Card transparency itself is delegated to the native theme editor (colorBgContainer),
+    // so the plugin no longer tints or blurs the card surface here.
     out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);
     out.push(`${scopedList(scope, s.card + ' div:not([class]):not([id])')}{background-color:transparent!important;}`);
-    // Frosted blur on content cards (+ code-block roots).
-    if (app.card.glass && app.card.blur > 0) {
-      out.push(`${scopedList(scope, s.card)},${scope} .code-block{${blur(app.card.blur)}}`);
-    }
   }
 
   // Top nav — the plugin only layers OPACITY + BLUR onto the theme's own header color

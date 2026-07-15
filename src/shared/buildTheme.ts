@@ -1,5 +1,5 @@
 import type { AppConfig } from './types';
-import { hexToRgba, sanitizeFontFamily } from './color';
+import { sanitizeFontFamily } from './color';
 
 /**
  * Builds the antd ThemeConfig that ExtraTheme applies through NocoBase's global
@@ -78,14 +78,12 @@ export function buildThemeConfig(
   token.colorBgElevated = '#ffffff';
 
   if (app.enabled) {
-    // colorBgLayout transparent so the page background shows through, regardless of cards.
+    // colorBgLayout transparent so the page background shows through. Cards themselves stay
+    // OPAQUE: colorBgContainer is a managed key, always cleared (reset-to-native) above and
+    // never re-set here — content-card transparency is delegated to the NATIVE theme editor
+    // now. Keeping colorBgContainer managed also cleanly reverts any translucent value an
+    // existing user had persisted from the old 内容卡片 switch.
     token.colorBgLayout = 'transparent';
-    // Card translucency is gated on the 内容区卡片 switch (card.glass): OFF ⇒ leave
-    // colorBgContainer reset-to-native (opaque cards). Otherwise the switch only killed
-    // the blur while cards stayed see-through.
-    if (app.card.glass) {
-      token.colorBgContainer = hexToRgba('#ffffff', app.card.opacity / 100);
-    }
   }
 
   // NOTE: the top + side nav are NOT themed via tokens here. Their COLOR is owned by

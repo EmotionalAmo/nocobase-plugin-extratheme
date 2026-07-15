@@ -19,13 +19,6 @@ export interface BackgroundConfig {
   dim: number; // 暗化遮罩 0–80 (%)
 }
 
-export interface CardConfig {
-  glass: boolean;
-  opacity: number; // 10–100 (%)
-  blur: number; // 0–40 (px)
-  border: boolean;
-}
-
 export interface NavConfig {
   enabled: boolean; // this nav's styling on/off, independent of the other nav
   style: NavStyle;
@@ -75,7 +68,6 @@ export interface KeepNativeConfig {
 export interface AppConfig {
   enabled: boolean;
   background: BackgroundConfig;
-  card: CardConfig;
   header: NavConfig;
   sider: NavConfig;
   font: FontConfig;

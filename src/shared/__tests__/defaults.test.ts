@@ -14,7 +14,6 @@ describe('defaults', () => {
   it('app starting values match spec', () => {
     expect(DEFAULT_APP.header).toMatchObject({ style: 'frosted', opacity: 90, blur: 14, text: 'dark' });
     expect(DEFAULT_APP.sider).toMatchObject({ style: 'frosted', opacity: 86, blur: 16 });
-    expect(DEFAULT_APP.card).toMatchObject({ glass: true, opacity: 72, blur: 12 });
   });
   it('scrollbar defaults off (native), mode always', () => {
     expect(DEFAULT_APP.scrollbar.enabled).toBe(false);

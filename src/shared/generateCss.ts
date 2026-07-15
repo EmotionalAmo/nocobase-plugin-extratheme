@@ -64,8 +64,12 @@ function blur(px: number): string {
 function materialExtras(style: NavStyle, texture: number): string {
   if (style !== 'material') return '';
   const a = Math.max(0, Math.min(1, safeNum(texture, 65) / 100)).toFixed(2);
+  // The grain is recolored to a light BLUE-WHITE highlight (no black) so it reads as bright
+  // water light, not dirty dark veins: feColorMatrix forces RGB = (0.82,0.92,1.0) and sets
+  // alpha = the turbulence luminance (0.34·R+0.34·G+0.34·B); feFuncA then scales that alpha
+  // by 水纹强度. So it only ever LIGHTENS the glass in wavy patches.
   const water =
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.009 0.016' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='" +
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.009 0.016' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.82 0 0 0 0 0.92 0 0 0 0 1 0.34 0.34 0.34 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='" +
     a +
     "'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E\")";
   return `background-image:${water}!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 2px 14px rgba(15,23,42,0.06);`;

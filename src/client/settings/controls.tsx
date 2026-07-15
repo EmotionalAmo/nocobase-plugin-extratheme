@@ -264,6 +264,11 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
       <Row label={t('背景模糊')} value={`${nav.blur}px`}>
         <Slider min={0} max={40} value={nav.blur} disabled={nav.style === 'solid'} onChange={(v) => set({ blur: v })} />
       </Row>
+      {nav.style === 'material' && (
+        <Row label={t('质感强度')} value={`${nav.texture}%`}>
+          <Slider min={0} max={100} value={nav.texture} onChange={(v) => set({ texture: v })} />
+        </Row>
+      )}
     </Group>
   );
 };

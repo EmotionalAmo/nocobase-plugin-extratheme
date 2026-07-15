@@ -209,6 +209,11 @@ describe('material nav style (etched-glass texture, not just blur)', () => {
     const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'material', color: '#ffffff', opacity: 60, blur: 16 } } }), SEL);
     expect(css).toContain('feTurbulence');
   });
+  it('the texture slider drives the grain alpha (feFuncA slope), coerced+clamped', () => {
+    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 80 } } }), SEL)).toContain("slope='0.80'");
+    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 10 } } }), SEL)).toContain("slope='0.10'");
+    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 999 } } }), SEL)).toContain("slope='1.00'"); // clamped
+  });
 });
 
 describe('isAppActive', () => {

@@ -33,6 +33,7 @@ export interface NavConfig {
   opacity: number; // 0–100 (%)
   blur: number; // 0–40 (px)
   text: TextTone;
+  texture: number; // 0–100 — grain intensity for the 'material' style (ignored otherwise)
 }
 
 export interface FontUpload {

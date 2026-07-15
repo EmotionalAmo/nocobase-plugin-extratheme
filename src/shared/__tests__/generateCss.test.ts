@@ -36,7 +36,7 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
 
   it('card glass false -> no card blur', () => {
     const css = generateStylesheet(mergeConfig({ app: { enabled: true, card: { glass: false } } }), SEL);
-    expect(css).not.toContain('backdrop-filter');
+    expect(css).not.toContain('backdrop-filter:blur');
   });
 
   it('header on -> theme color at opacity + blur when frosted (independent of workspace switch)', () => {
@@ -48,7 +48,7 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
   it('header solid -> opacity applied but no blur', () => {
     const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: 'rgb(0, 21, 41)', opacity: 80, style: 'solid', blur: 16 } } }), SEL);
     expect(css).toContain('background:rgba(0,21,41,0.8)!important;}'); // no blur suffix
-    expect(css).not.toContain('backdrop-filter');
+    expect(css).not.toContain('backdrop-filter:blur');
   });
 
   it('sider on -> uniform full-width tint on sider-children + cleared menu bg + no border', () => {
@@ -184,7 +184,7 @@ describe('SECURITY: no config value breaks out of the injected stylesheet', () =
   it('blur breakout string -> no injection (numeric gate + safeNum coercion)', () => {
     const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: '#001529', opacity: 50, style: 'frosted', blur: '5);}body{x:1' as any } } }), SEL);
     expect(css).not.toContain('body{x:1'); // never reaches the stylesheet
-    expect(css).not.toContain('backdrop-filter'); // non-numeric blur fails the >0 gate → not emitted
+    expect(css).not.toContain('backdrop-filter:blur'); // non-numeric blur fails the >0 gate → not emitted
   });
   it('uploaded font format breakout -> dropped (allow-list)', () => {
     const css = generateStylesheet(mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/f.woff2', name: 'X', format: 'woff2") ;} body{x:1} @font-face{src:url(//evil' as any } } } }), SEL);
@@ -213,6 +213,25 @@ describe('material nav style = 水纹玻璃 (seamless water-caustics texture, no
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 80 } } }), SEL)).toContain("slope='0.80'");
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 10 } } }), SEL)).toContain("slope='0.10'");
     expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 999 } } }), SEL)).toContain("slope='1.00'"); // clamped
+  });
+});
+
+describe('keepNative (exclude the AI panel from theming — opaque/no-blur/native scrollbar)', () => {
+  it('default ON: forces the selector opaque + no blur + native scrollbar, scoped to the marker', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true } }), SEL); // keepNative default on, sel .chat-box,.chatbox
+    expect(css).toContain('body.extra-theme-app-on .chat-box,body.extra-theme-app-on .chatbox{background-color:#fff!important;}');
+    expect(css).toContain('backdrop-filter:none!important');
+    expect(css).toContain('body.extra-theme-app-on .chat-box ::-webkit-scrollbar');
+  });
+  it('off → nothing injected for it', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, keepNative: { enabled: false, selector: '.chat-box' } } }), SEL);
+    expect(css).not.toContain('.chat-box{background-color:#fff');
+    expect(css).not.toContain('.chat-box ::-webkit-scrollbar');
+  });
+  it('SECURITY: a rule-breakout selector is rejected (nothing injected)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: true, keepNative: { enabled: true, selector: 'x}body{background:red' } } }), SEL);
+    expect(css).not.toContain('background:red');
+    expect(css).not.toContain('x}body{');
   });
 });
 

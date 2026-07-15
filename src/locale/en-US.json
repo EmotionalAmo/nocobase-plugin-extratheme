@@ -80,6 +80,8 @@
   "水纹玻璃": "Liquid glass",
   "水纹强度": "Ripple",
   "隐藏元素": "Hide elements",
+  "保持原生": "Keep native",
+  "让匹配到的模块（默认右侧 AI 面板）保持原生:不透明、无模糊、原生滚动条。若默认没命中,检查 AI 面板容器 class 后填这里。": "Keep matching modules (default: the right-side AI panel) native — opaque, no blur, native scrollbar. If the default selector misses your AI panel, inspect its container class and put it here.",
   "CSS 选择器": "CSS selector",
   "隐藏匹配到的元素（如 AI 入口）。可填多个,用逗号分隔。注意：.css-xxxx 是 NocoBase 自动生成的哈希类,升级后可能变化——失效时来这里更新即可,无需换插件版本。": "Hide elements matching the selector (e.g. the AI entry). Comma-separate multiple selectors. Note: a .css-xxxx class is a NocoBase-generated hash that can change across upgrades — if it stops matching, just update it here (no plugin release needed).",
   "欢迎登录": "Welcome back",

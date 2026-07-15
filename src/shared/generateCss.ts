@@ -181,6 +181,24 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     if (sel) out.push(`${sel}{display:none!important;}`);
   }
 
+  // Keep listed subtrees NATIVE (default: the right-side AI chat panel). The theme's
+  // transparency/blur/custom-scrollbar otherwise bleed into them (the AI panel goes
+  // see-through). Give them an opaque backing, drop blur, and restore a native scrollbar.
+  // Scoped to the theme marker so it only acts while the theme is on. Selector sanitized.
+  if (app.keepNative?.enabled && isAppActive(app)) {
+    const sel = sanitizeCssSelector(app.keepNative.selector || '');
+    if (sel) {
+      const parts = sel.split(',').map((s) => s.trim()).filter(Boolean);
+      const each = (suffix: string) => parts.map((s) => `${scope} ${s}${suffix}`).join(',');
+      out.push(
+        `${each('')}{background-color:#fff!important;}` +
+          `${each('')},${each(' *')}{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}` +
+          `${each(' ::-webkit-scrollbar')}{width:12px!important;height:12px!important;}` +
+          `${each(' ::-webkit-scrollbar-thumb')}{background:rgba(0,0,0,0.25)!important;border:none!important;border-radius:6px!important;background-clip:border-box!important;}`,
+      );
+    }
+  }
+
   return out.join('\n');
 }
 

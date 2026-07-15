@@ -53,6 +53,10 @@ export const DEFAULT_APP: AppConfig = {
   // the default selector targets the AI entry's emotion-hash class (user-editable — the
   // hash changes across NocoBase builds).
   hide: { enabled: false, selector: '.css-1hc929u' },
+  // keep the right-side AI chat panel native (opaque, no blur, native scrollbar). ON by
+  // default — the theme's transparency otherwise makes the AI panel see-through. Selector
+  // is user-editable (the panel's class may be an emotion hash).
+  keepNative: { enabled: true, selector: '.chat-box, .chatbox' },
 };
 
 /** Starting values for the 登录页外观 group (independent of app). */

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Segmented, Slider, Switch, ColorPicker, Input, Select, Upload, Button } from 'antd';
-import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig, HideConfig } from '../../shared/types';
+import type { AppConfig, LoginConfig, BackgroundConfig, CardConfig, NavConfig, LoginCard, FontConfig, ScrollbarConfig, HideConfig, KeepNativeConfig } from '../../shared/types';
 import { GRADIENT_PRESETS, FONT_PRESETS } from '../../shared/defaults';
 import { isEphemeralUrl } from '../../shared/color';
 import { useT } from '../useT';
@@ -235,6 +235,26 @@ const HideGroup: React.FC<{ hide: HideConfig; onChange: (h: HideConfig) => void 
   );
 };
 
+// Keep the right-side AI panel (or any listed selector) native — undo the theme's
+// transparency/blur/scrollbar inside it. On by default. Selector user-editable (the AI
+// panel's class may be an emotion hash, so it must be fixable without a release).
+const KeepNativeGroup: React.FC<{ keep: KeepNativeConfig; onChange: (k: KeepNativeConfig) => void }> = ({ keep, onChange }) => {
+  const t = useT();
+  const set = (p: Partial<KeepNativeConfig>) => onChange({ ...keep, ...p });
+  return (
+    <Group title={t('保持原生')} right={<Switch size="small" checked={keep.enabled} onChange={(v) => set({ enabled: v })} />}>
+      <div style={dimStyle(keep.enabled)}>
+        <Row label={t('CSS 选择器')}>
+          <Input value={keep.selector} placeholder=".chat-box, .chatbox" onChange={(e) => set({ selector: e.target.value })} />
+        </Row>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+          {t('让匹配到的模块（默认右侧 AI 面板）保持原生:不透明、无模糊、原生滚动条。若默认没命中,检查 AI 面板容器 class 后填这里。')}
+        </div>
+      </div>
+    </Group>
+  );
+};
+
 // Nav = one base COLOR (the theme editor can't set colorBgHeader, so the plugin owns it)
 // + the enhancement layer: style + opacity + blur. Menu TEXT color stays theme-managed.
 const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
@@ -440,9 +460,10 @@ export const AppForm: React.FC<{
           <BackgroundGroup first bg={app.background} onChange={(background) => onChange({ ...app, background })} uploadImage={uploadImage} />
           <CardGroup card={app.card} onChange={(card) => onChange({ ...app, card })} />
         </div>
-        {/* scrollbar + hide are global preferences, independent of the workspace switch (not dimmed) */}
+        {/* scrollbar + hide + keep-native are global preferences, independent of the workspace switch (not dimmed) */}
         <ScrollbarGroup scrollbar={app.scrollbar} onChange={(scrollbar) => onChange({ ...app, scrollbar })} />
         <HideGroup hide={app.hide} onChange={(hide) => onChange({ ...app, hide })} />
+        <KeepNativeGroup keep={app.keepNative} onChange={(keepNative) => onChange({ ...app, keepNative })} />
       </Panel>
       {/* middle column: top + side nav stacked vertically */}
       <div style={{ flex: '1 1 300px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 20 }}>

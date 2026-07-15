@@ -64,6 +64,14 @@ export interface HideConfig {
   selector: string;
 }
 
+export interface KeepNativeConfig {
+  enabled: boolean; // force matching subtrees back to native (opaque, no blur, native scrollbar)
+  // A CSS selector LIST — matches (and their descendants) are EXCLUDED from the theme's
+  // transparency/blur/scrollbar so they render native. Default targets the right-side AI
+  // chat panel. User-editable (the panel's class may be an emotion hash).
+  selector: string;
+}
+
 export interface AppConfig {
   enabled: boolean;
   background: BackgroundConfig;
@@ -73,6 +81,7 @@ export interface AppConfig {
   font: FontConfig;
   scrollbar: ScrollbarConfig;
   hide: HideConfig;
+  keepNative: KeepNativeConfig;
 }
 
 export interface LoginCard {

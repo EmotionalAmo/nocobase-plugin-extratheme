@@ -7,7 +7,7 @@
  */
 
 export type BgType = 'none' | 'color' | 'gradient' | 'image';
-export type NavStyle = 'solid' | 'frosted' | 'material';
+export type NavStyle = 'solid' | 'liquid';
 export type TextTone = 'dark' | 'light';
 export type BgFit = 'cover' | 'contain' | 'stretch' | 'repeat';
 
@@ -23,10 +23,11 @@ export interface NavConfig {
   enabled: boolean; // this nav's styling on/off, independent of the other nav
   style: NavStyle;
   color: string;
-  opacity: number; // 0–100 (%)
-  blur: number; // 0–40 (px)
+  opacity: number; // 0–100 (%) — glass tint strength over the refracted backdrop
+  blur: number; // 0–40 (px) — backdrop frost amount
   text: TextTone;
-  texture: number; // 0–100 — grain intensity for the 'material' style (ignored otherwise)
+  refract: number; // 0–100 — liquid-glass refraction/displacement strength (ignored for 'solid')
+  aberration: number; // 0–100 — chromatic aberration (colour fringe) at the glass edges (ignored for 'solid')
 }
 
 export interface FontUpload {

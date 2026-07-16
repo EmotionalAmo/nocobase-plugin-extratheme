@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateStylesheet, isAppActive } from '../generateCss';
+import { generateStylesheet, generateSvgFilters, isAppActive, LIQUID_FILTER_IDS } from '../generateCss';
 import { mergeConfig } from '../defaults';
 import type { Selectors } from '../types';
 
@@ -20,6 +20,13 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('body.extra-theme-app-on .ant-pro-layout-content{background:transparent!important;}');
     expect(css).toContain('.ant-card div:not([class]):not([id])');
     expect(css).toContain('.ant-layout-sider-children{top:auto!important;bottom:0!important;}');
+    // sign-in footer brand bar (shares <body>) neutralized so the bg covers it, via stable .nb-brand
+    expect(css).toContain('body.extra-theme-app-on div:has(> .nb-brand),body.extra-theme-app-on .nb-brand{background-color:transparent!important;}');
+  });
+
+  it('工作区外观 OFF -> no .nb-brand footer rule (only emitted with the background)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true } } }), SEL);
+    expect(css).not.toContain('.nb-brand');
   });
 
   it('workspace card/container color stays a token (not a CSS rule)', () => {
@@ -35,9 +42,12 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).not.toContain('.code-block'); // no card/code-block frosted rule anymore
   });
 
-  it('header on -> theme color at opacity + blur when frosted (independent of workspace switch)', () => {
-    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true, color: 'rgb(0, 21, 41)', opacity: 50, style: 'frosted', blur: 16 } } }), SEL);
-    expect(css).toContain('.ant-pro-layout-header{background:rgba(0,21,41,0.5)!important;backdrop-filter:blur(16px);');
+  it('header liquid -> tint + progressive backdrop-filter (plain fallback then url(#id) refraction) + specular', () => {
+    const css = generateStylesheet(mergeConfig({ app: { enabled: false, header: { enabled: true, color: 'rgb(0, 21, 41)', opacity: 50, style: 'liquid', blur: 16 } } }), SEL);
+    expect(css).toContain('.ant-pro-layout-header{background:rgba(0,21,41,0.5)!important;');
+    expect(css).toContain('backdrop-filter:blur(16px) saturate(160%)!important;'); // universal fallback (declared first)
+    expect(css).toContain('backdrop-filter:url(#extra-theme-lg-header) blur(16px) saturate(160%)!important;'); // Chrome refraction (wins)
+    expect(css).toContain('box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)'); // specular glass edge
     expect(css).not.toContain('background:linear-gradient'); // workspace bg off
   });
 
@@ -58,9 +68,10 @@ describe('generateStylesheet (thin: bg + blur only; colors are tokens)', () => {
     expect(css).toContain('::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18)');
   });
 
-  it('sider frosted -> blur lands on the sider-children container', () => {
-    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'frosted', blur: 18 } } }), SEL);
-    expect(css).toMatch(/\.ant-layout-sider-children\{background:[^}]*backdrop-filter:blur\(18px\);/);
+  it('sider liquid -> frost + url(#id) refraction land on the sider-children container', () => {
+    const css = generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'liquid', blur: 18 } } }), SEL);
+    expect(css).toMatch(/\.ant-layout-sider-children\{background:[^}]*backdrop-filter:blur\(18px\) saturate\(160%\)!important;/);
+    expect(css).toContain('backdrop-filter:url(#extra-theme-lg-sider) blur(18px) saturate(160%)!important;');
   });
 
   it('image fit=cover -> size:cover + no-repeat, all !important so it fills (no tiling)', () => {
@@ -177,10 +188,10 @@ describe('SECURITY: no config value breaks out of the injected stylesheet', () =
       expect(css).not.toContain('html{}');
     });
   });
-  it('blur breakout string -> no injection (numeric gate + safeNum coercion)', () => {
-    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: '#001529', opacity: 50, style: 'frosted', blur: '5);}body{x:1' as any } } }), SEL);
+  it('blur breakout string -> coerced to a number, no injection (safeNum)', () => {
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, color: '#001529', opacity: 50, style: 'liquid', blur: '5);}body{x:1' as any } } }), SEL);
     expect(css).not.toContain('body{x:1'); // never reaches the stylesheet
-    expect(css).not.toContain('backdrop-filter:blur'); // non-numeric blur fails the >0 gate → not emitted
+    expect(css).toMatch(/backdrop-filter:blur\(\d+(\.\d+)?px\) saturate\(160%\)/); // blur is a coerced number, not the raw string
   });
   it('uploaded font format breakout -> dropped (allow-list)', () => {
     const css = generateStylesheet(mergeConfig({ app: { font: { enabled: true, source: 'upload', upload: { url: 'http://h/f.woff2', name: 'X', format: 'woff2") ;} body{x:1} @font-face{src:url(//evil' as any } } } }), SEL);
@@ -190,25 +201,49 @@ describe('SECURITY: no config value breaks out of the injected stylesheet', () =
   });
 });
 
-describe('material nav style = 水纹玻璃 (seamless water-caustics texture, not just blur)', () => {
-  it('material header adds a seamless water texture (turbulence+stitch) + sheen; frosted does not', () => {
-    const mat = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', color: '#ffffff', opacity: 50, blur: 10 } } }), SEL);
-    expect(mat).toContain('background-image:url("data:image/svg+xml');
-    expect(mat).toContain("type='turbulence'"); // water veins, not fine grain
-    expect(mat).toContain("stitchTiles='stitch'"); // seamless (no vertical seams)
-    expect(mat).toContain('box-shadow:inset 0 1px 0'); // top sheen
-    expect(mat).toContain('backdrop-filter:blur(10px)'); // still blurs behind
-    const frosted = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'frosted', color: '#ffffff', opacity: 50, blur: 10 } } }), SEL);
-    expect(frosted).not.toContain('turbulence');
-    expect(frosted).toContain('backdrop-filter:blur(10px)');
+describe('liquid nav style = 液态玻璃 (in-document SVG refraction filter + chromatic aberration)', () => {
+  it('generateSvgFilters emits a <filter> per enabled liquid nav (3 channel-split passes each = aberration)', () => {
+    const app = mergeConfig({ app: { header: { enabled: true, style: 'liquid' }, sider: { enabled: true, style: 'liquid' } } }).app;
+    const svg = generateSvgFilters(app);
+    expect(svg).toContain(`<filter id="${LIQUID_FILTER_IDS.header}"`);
+    expect(svg).toContain(`<filter id="${LIQUID_FILTER_IDS.sider}"`);
+    expect((svg.match(/feDisplacementMap/g) || []).length).toBe(6); // 3 per nav (R/G/B split)
   });
-  it('material sider also gets the water texture', () => {
-    expect(generateStylesheet(mergeConfig({ app: { sider: { enabled: true, style: 'material', blur: 12 } } }), SEL)).toContain("type='turbulence'");
+  it('generateSvgFilters gates each nav independently (header liquid, sider solid)', () => {
+    const svg = generateSvgFilters(mergeConfig({ app: { header: { enabled: true, style: 'liquid' }, sider: { enabled: true, style: 'solid' } } }).app);
+    expect(svg).toContain(`<filter id="${LIQUID_FILTER_IDS.header}"`);
+    expect(svg).not.toContain(LIQUID_FILTER_IDS.sider);
   });
-  it('水纹强度 (texture) drives the grain alpha (feFuncA slope), coerced+clamped', () => {
-    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 80 } } }), SEL)).toContain("slope='0.80'");
-    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 10 } } }), SEL)).toContain("slope='0.10'");
-    expect(generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'material', texture: 999 } } }), SEL)).toContain("slope='1.00'"); // clamped
+  it('generateSvgFilters is empty when no nav is liquid (injector then clears stale filters)', () => {
+    expect(generateSvgFilters(mergeConfig({ app: { header: { enabled: false, style: 'liquid' } } }).app)).toBe('');
+    expect(generateSvgFilters(mergeConfig({ app: { header: { enabled: true, style: 'solid' } } }).app)).toBe('');
+    expect(generateSvgFilters(mergeConfig({}).app)).toBe('');
+  });
+  it('refract drives the displacement scale; aberration spreads the per-channel scales', () => {
+    // base = 50*1.2 = 60.0 ; aber = 20*0.1 = 2 ; channels 60.0 / 58.0 / 56.0
+    const svg = generateSvgFilters(mergeConfig({ app: { header: { enabled: true, style: 'liquid', refract: 50, aberration: 20 } } }).app);
+    expect(svg).toContain('scale="60.0"');
+    expect(svg).toContain('scale="58.0"');
+    expect(svg).toContain('scale="56.0"');
+  });
+  it('refract/aberration/blur are clamped so no absurd/overflow value reaches the public CSS/SVG', () => {
+    const svg = generateSvgFilters(mergeConfig({ app: { header: { enabled: true, style: 'liquid', refract: 1.6e308 as any, aberration: 999 } } }).app);
+    expect(svg).toContain('scale="120.0"'); // refract clamped to 100 -> 100*1.2 (was Infinity pre-clamp)
+    expect(svg).not.toContain('Infinity');
+    const css = generateStylesheet(mergeConfig({ app: { header: { enabled: true, style: 'liquid', blur: 9999 as any } } }), SEL);
+    expect(css).toContain('blur(40px)'); // blur clamped to its 0–40 UI range
+  });
+  it('displacement map is a self-contained data-URI (CSP-safe, no external asset)', () => {
+    const svg = generateSvgFilters(mergeConfig({ app: { header: { enabled: true, style: 'liquid' } } }).app);
+    expect(svg).toContain('href="data:image/svg+xml,');
+    expect(svg).not.toContain('http://');
+    expect(svg).not.toContain('https://');
+  });
+  it('migration: legacy frosted/material nav styles normalize to liquid; solid stays solid', () => {
+    const m = mergeConfig({ app: { header: { style: 'frosted' as any }, sider: { style: 'material' as any } } });
+    expect(m.app.header.style).toBe('liquid');
+    expect(m.app.sider.style).toBe('liquid');
+    expect(mergeConfig({ app: { header: { style: 'solid' } } }).app.header.style).toBe('solid');
   });
 });
 

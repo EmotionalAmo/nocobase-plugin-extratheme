@@ -239,6 +239,7 @@ const KeepNativeGroup: React.FC<{ keep: KeepNativeConfig; onChange: (k: KeepNati
 const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> = ({ nav, onChange }) => {
   const t = useT();
   const set = (p: Partial<NavConfig>) => onChange({ ...nav, ...p });
+  const liquid = nav.style === 'liquid';
   return (
     <Group first>
       <Row label={t('背景颜色')}>
@@ -252,8 +253,7 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
           onChange={(v) => set({ style: v as any })}
           options={[
             { label: t('实色'), value: 'solid' },
-            { label: t('毛玻璃'), value: 'frosted' },
-            { label: t('水纹玻璃'), value: 'material' },
+            { label: t('液态玻璃'), value: 'liquid' },
           ]}
         />
       </Row>
@@ -261,12 +261,20 @@ const NavGroup: React.FC<{ nav: NavConfig; onChange: (n: NavConfig) => void }> =
         <Slider min={0} max={100} value={nav.opacity} onChange={(v) => set({ opacity: v })} />
       </Row>
       <Row label={t('背景模糊')} value={`${nav.blur}px`}>
-        <Slider min={0} max={40} value={nav.blur} disabled={nav.style === 'solid'} onChange={(v) => set({ blur: v })} />
+        <Slider min={0} max={40} value={nav.blur} disabled={!liquid} onChange={(v) => set({ blur: v })} />
       </Row>
-      {nav.style === 'material' && (
-        <Row label={t('水纹强度')} value={`${nav.texture}%`}>
-          <Slider min={0} max={100} value={nav.texture} onChange={(v) => set({ texture: v })} />
-        </Row>
+      {liquid && (
+        <>
+          <Row label={t('折射强度')} value={`${nav.refract}`}>
+            <Slider min={0} max={100} value={nav.refract} onChange={(v) => set({ refract: v })} />
+          </Row>
+          <Row label={t('色散')} value={`${nav.aberration}`}>
+            <Slider min={0} max={100} value={nav.aberration} onChange={(v) => set({ aberration: v })} />
+          </Row>
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, lineHeight: 1.6 }}>
+            {t('液态玻璃的折射仅在 Chrome/Edge 生效;其它浏览器自动降级为磨砂玻璃。效果在有内容滚动经过的顶部导航栏最明显,纯背景上会较弱。')}
+          </div>
+        </>
       )}
     </Group>
   );

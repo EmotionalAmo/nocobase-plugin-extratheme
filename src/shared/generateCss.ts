@@ -1,4 +1,4 @@
-import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig, NavStyle } from './types';
+import type { ExtraThemeConfig, AppConfig, Selectors, BackgroundConfig } from './types';
 import { hexToRgba, buildBackground, sanitizeFontFamily, fontFormatFromUrl, sanitizeCssUrl, withAlpha, safeNum, sanitizeCssSelector } from './color';
 
 /** @font-face src format() allow-list — reject anything else so a crafted value can't break out. */
@@ -47,32 +47,90 @@ function scopedList(scope: string, list: string): string {
     .join(',');
 }
 
-function blur(px: number): string {
-  const n = safeNum(px); // coerce — px is interpolated raw into blur(<n>px)
-  return `backdrop-filter:blur(${n}px);-webkit-backdrop-filter:blur(${n}px);`;
+/** The two liquid-glass SVG <filter> ids (one per nav). generateSvgFilters emits the matching
+ * in-document <filter> defs; the nav CSS references them via backdrop-filter:url(#id). The two
+ * sides MUST stay in sync — Chrome only resolves url(#id) when the filter is actually present. */
+export const LIQUID_FILTER_IDS = { header: 'extra-theme-lg-header', sider: 'extra-theme-lg-sider' } as const;
+
+/** Coerce (safeNum) then CLAMP into [min,max]. refract/aberration/blur are UI-bounded (0–100,
+ * 0–40); clamping stops a direct API write of an absurd/overflowing value (e.g. 1e309 → Infinity)
+ * from reaching the publicly-served CSS/SVG. Inert either way (numeric text can't break out), but
+ * keeps the output sane — matching the clamp the old 'texture' path had. */
+function clampNum(v: any, min: number, max: number, def: number): number {
+  return Math.max(min, Math.min(max, safeNum(v, def)));
 }
 
-/** Extra CSS for the 水纹玻璃 ('material') style: a SEAMLESS grayscale water-caustics texture
- * as a `background-image`. It's an SVG `feTurbulence type=turbulence` + `stitchTiles=stitch`
- * (so it tiles with no visible seams), rendered 1:1 over a big tile (so it's not stretched
- * soft nor seam-repeated) — a real "water ripple" look, unlike a plain blur. Backdrop
- * displacement was tried and rejected: it refracts the BACKDROP, so over a smooth sky it's
- * invisible. The grain contrast/depth is driven by `texture` (0–100 → feFuncA slope). The
- * image is emitted AFTER the `background` shorthand so it isn't reset (repeat/size stay at the
- * shorthand's initials: repeat/auto). `texture` is coerced+clamped → safe to interpolate.
- * CSP-safe (self-contained data-URI, no external asset). '' for other styles. */
-function materialExtras(style: NavStyle, texture: number): string {
-  if (style !== 'material') return '';
-  const a = Math.max(0, Math.min(1, safeNum(texture, 65) / 100)).toFixed(2);
-  // The grain is recolored to a light BLUE-WHITE highlight (no black) so it reads as bright
-  // water light, not dirty dark veins: feColorMatrix forces RGB = (0.82,0.92,1.0) and sets
-  // alpha = the turbulence luminance (0.34·R+0.34·G+0.34·B); feFuncA then scales that alpha
-  // by 水纹强度. So it only ever LIGHTENS the glass in wavy patches.
-  const water =
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.009 0.016' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.82 0 0 0 0 0.92 0 0 0 0 1 0.34 0.34 0.34 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='" +
-    a +
-    "'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E\")";
-  return `background-image:${water}!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 2px 14px rgba(15,23,42,0.06);`;
+/** Displacement map for the liquid lens: a linear gradient with a neutral (128) centre band
+ * ramping to the rim, so feDisplacementMap bends the backdrop only at the glass edges. Header =
+ * vertical bend (encoded in the B channel), sider = horizontal bend (R channel). Self-contained
+ * data-URI (CSP-safe — no external asset). */
+function liquidDispMap(orient: 'header' | 'sider'): string {
+  const grad =
+    orient === 'sider'
+      ? "<linearGradient id='g' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='rgb(0,128,128)'/><stop offset='.42' stop-color='rgb(128,128,128)'/><stop offset='.58' stop-color='rgb(128,128,128)'/><stop offset='1' stop-color='rgb(255,128,128)'/></linearGradient>"
+      : "<linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='rgb(128,128,0)'/><stop offset='.42' stop-color='rgb(128,128,128)'/><stop offset='.58' stop-color='rgb(128,128,128)'/><stop offset='1' stop-color='rgb(128,128,255)'/></linearGradient>";
+  const svg =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><defs>" + grad + "</defs><rect width='120' height='120' fill='url(#g)'/></svg>";
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+/** One liquid-glass SVG filter: an feImage displacement map + three channel-split
+ * feDisplacementMap passes (R/G/B at slightly different scales) recombined with screen blends
+ * → refraction + chromatic aberration (the visible "liquid glass" edge fringe). `refract`
+ * (0–100) drives the displacement scale, `aberration` (0–100) the per-channel scale spread.
+ * All numeric inputs are coerced (safeNum) and the map is a fixed template — safe to interpolate. */
+function liquidFilter(id: string, orient: 'header' | 'sider', refract: number, aberration: number): string {
+  const base = clampNum(refract, 0, 100, 60) * 1.2;
+  const aber = clampNum(aberration, 0, 100, 40) * 0.1;
+  const s1 = base.toFixed(1);
+  const s2 = (base - aber).toFixed(1);
+  const s3 = (base - aber * 2).toFixed(1);
+  const map = liquidDispMap(orient);
+  return (
+    `<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">` +
+    `<feImage href="${map}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="MAP"/>` +
+    `<feDisplacementMap in="SourceGraphic" in2="MAP" scale="${s1}" xChannelSelector="R" yChannelSelector="B" result="RED"/>` +
+    `<feColorMatrix in="RED" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="RC"/>` +
+    `<feDisplacementMap in="SourceGraphic" in2="MAP" scale="${s2}" xChannelSelector="R" yChannelSelector="B" result="GRN"/>` +
+    `<feColorMatrix in="GRN" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="GC"/>` +
+    `<feDisplacementMap in="SourceGraphic" in2="MAP" scale="${s3}" xChannelSelector="R" yChannelSelector="B" result="BLU"/>` +
+    `<feColorMatrix in="BLU" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="BC"/>` +
+    `<feBlend in="GC" in2="BC" mode="screen" result="GB"/>` +
+    `<feBlend in="RC" in2="GB" mode="screen"/>` +
+    `</filter>`
+  );
+}
+
+/** In-document SVG <filter> defs for the liquid-glass navs. Emitted per-nav, gated
+ * INDEPENDENTLY (header iff header enabled+liquid, sider iff sider enabled+liquid) so it always
+ * matches the CSS that references url(#id). '' when neither nav is liquid — the injector then
+ * clears the <svg> so stale filters don't linger. The refraction is Chrome-only (other browsers
+ * ignore url() in backdrop-filter and keep the plain blur fallback; see liquidBackdrop). */
+export function generateSvgFilters(app: AppConfig): string {
+  const out: string[] = [];
+  if (app.header?.enabled && app.header.style === 'liquid') {
+    out.push(liquidFilter(LIQUID_FILTER_IDS.header, 'header', app.header.refract, app.header.aberration));
+  }
+  if (app.sider?.enabled && app.sider.style === 'liquid') {
+    out.push(liquidFilter(LIQUID_FILTER_IDS.sider, 'sider', app.sider.refract, app.sider.aberration));
+  }
+  return out.join('');
+}
+
+/** The backdrop-filter declarations for a liquid-glass nav element. Progressive enhancement:
+ * a plain blur+saturate is emitted FIRST (universal fallback), then the url(#id) refraction
+ * variant — being a later, equal-importance declaration it WINS in Chrome (where it parses),
+ * while Firefox/Safari drop the invalid url() form and keep the frosted fallback either way.
+ * Plus a specular glass edge via inset highlights. blur is coerced → safe to interpolate. */
+function liquidBackdrop(nav: { blur: number }, filterId: string): string {
+  const b = clampNum(nav.blur, 0, 40, 3);
+  const plain = `blur(${b}px) saturate(160%)`;
+  const lens = `url(#${filterId}) ${plain}`;
+  return (
+    `-webkit-backdrop-filter:${plain}!important;backdrop-filter:${plain}!important;` +
+    `-webkit-backdrop-filter:${lens}!important;backdrop-filter:${lens}!important;` +
+    `box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),inset 0 -1px 0 rgba(255,255,255,0.15),0 3px 14px rgba(0,0,0,0.10);`
+  );
 }
 
 function appCss(app: AppConfig, s: Selectors['app']): string {
@@ -96,18 +154,22 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     // so the plugin no longer tints or blurs the card surface here.
     out.push(`${scopedList(scope, s.content)}{background:transparent!important;}`);
     out.push(`${scopedList(scope, s.card + ' div:not([class]):not([id])')}{background-color:transparent!important;}`);
+    // The sign-in page shares <body>, so the page background carries onto it too. Neutralize
+    // the one opaque wrapper that the rules above miss there: the footer brand bar (a white
+    // div wrapping NocoBase's stable `.nb-brand`). Its own class is an emotion hash, so target
+    // it via :has() on the stable brand element (Chrome-supported; dropped gracefully elsewhere).
+    out.push(`${scope} div:has(> .nb-brand),${scope} .nb-brand{background-color:transparent!important;}`);
   }
 
-  // Top nav — the plugin only layers OPACITY + BLUR onto the theme's own header color
-  // (header.color is captured from the theme's colorBgHeader at save time). The color
-  // itself stays theme-editor-managed. Independent of the workspace switch. Targets the
-  // real pro-layout header (and the outer wrapper for robustness).
+  // Top nav — the plugin owns a tint (color × opacity) over the theme's header and, for the
+  // 'liquid' style, layers liquid-glass refraction (the SVG filter) + frost + a specular edge
+  // on top. Menu TEXT colour stays theme-editor-managed. Independent of the workspace switch.
+  // Targets the real pro-layout header (and the outer wrapper for robustness).
   if (app.header.enabled) {
     const headerBg = withAlpha(app.header.color, app.header.opacity / 100);
-    const frosted = app.header.style === 'frosted' || app.header.style === 'material';
-    const glass = frosted && app.header.blur > 0 ? blur(app.header.blur) : '';
+    const glass = app.header.style === 'liquid' ? liquidBackdrop(app.header, LIQUID_FILTER_IDS.header) : '';
     out.push(
-      `${scope} .ant-layout-header,${scope} .ant-pro-layout-header{background:${headerBg}!important;${glass}${materialExtras(app.header.style, app.header.texture)}}`,
+      `${scope} .ant-layout-header,${scope} .ant-pro-layout-header{background:${headerBg}!important;${glass}}`,
     );
   }
 
@@ -134,17 +196,17 @@ function appCss(app: AppConfig, s: Selectors['app']): string {
     }
   }
 
-  // Side nav — same deal: only OPACITY + BLUR over the theme's own nav color
-  // (sider.color captured from the theme at save). Tint the FULL-WIDTH sider container
-  // uniformly; clear the dark placeholder + the inset menu's own bg + the menu/container
-  // right border (the "invisible border"); tame the internal scrollbar. Menu TEXT color
-  // is left to the theme (not overridden).
+  // Side nav — same deal: a tint (color × opacity) over the theme's nav color, plus the
+  // 'liquid' glass (refraction + frost + specular edge) when selected. Tint the FULL-WIDTH
+  // sider container uniformly; clear the dark placeholder + the inset menu's own bg + the
+  // menu/container right border (the "invisible border"); tame the internal scrollbar. Menu
+  // TEXT color is left to the theme (not overridden).
   if (app.sider.enabled) {
     const siderBg = withAlpha(app.sider.color, app.sider.opacity / 100);
-    const glass = (app.sider.style === 'frosted' || app.sider.style === 'material') && app.sider.blur > 0 ? blur(app.sider.blur) : '';
+    const glass = app.sider.style === 'liquid' ? liquidBackdrop(app.sider, LIQUID_FILTER_IDS.sider) : '';
     out.push(
       `${scope} .ant-layout-sider{background:transparent!important;}` +
-        `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}${materialExtras(app.sider.style, app.sider.texture)}}` +
+        `${scope} .ant-layout-sider-children{background:${siderBg}!important;border-right:none!important;${glass}}` +
         `${scope} .ant-layout-sider .ant-menu{background:transparent!important;border-inline-end:none!important;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar{width:6px;height:6px;}` +
         `${scope} .ant-layout-sider .ant-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px;}` +

@@ -9,11 +9,13 @@
  * Uses only browser globals (document/window/localStorage) — the NocoBase
  * server build never imports this file, so it stays out of the server bundle.
  */
-import { generateStylesheet, isAppActive } from './generateCss';
+import { generateStylesheet, generateSvgFilters, isAppActive } from './generateCss';
 import { mergeConfig } from './defaults';
 import type { Selectors, ExtraThemeConfig } from './types';
 
 const STYLE_ID = 'extra-theme-style';
+const SVG_ID = 'extra-theme-filters';
+const SVG_NS = 'http://www.w3.org/2000/svg';
 const CACHE_KEY = 'EXTRA_THEME_CACHE';
 export const CHANGE_EVENT = 'extra-theme:changed';
 
@@ -64,5 +66,19 @@ export class ThemeInjector {
       document.head.appendChild(el);
     }
     el.textContent = generateStylesheet(cfg, this.selectors);
+
+    // Liquid-glass navs reference an SVG <filter> via `backdrop-filter:url(#id)`. Chrome only
+    // resolves that when the filter is an IN-DOCUMENT element (a data-URI filter ref is ignored),
+    // so keep a single hidden <svg> whose <defs> hold the current filters. Empty string clears
+    // it when no nav is liquid, so stale filters never linger.
+    let svg: Element | null = document.getElementById(SVG_ID);
+    if (!svg) {
+      svg = document.createElementNS(SVG_NS, 'svg');
+      svg.id = SVG_ID;
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;');
+      body.appendChild(svg);
+    }
+    svg.innerHTML = generateSvgFilters(cfg.app);
   }
 }

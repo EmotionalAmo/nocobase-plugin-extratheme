@@ -14,12 +14,17 @@ function bgStyle(bg: BackgroundConfig): React.CSSProperties {
 }
 
 function navStyle(nav: NavConfig): React.CSSProperties {
-  const glass = nav.style === 'frosted' && nav.blur > 0 ? `blur(${nav.blur}px)` : undefined;
+  // Approximation: the real liquid-glass refraction is an SVG backdrop filter that only bends
+  // content scrolling behind the bar — it can't show over this tiny smooth mock — so preview it
+  // as frost + saturation + a specular edge, which is what liquid also degrades to elsewhere.
+  const liquid = nav.style === 'liquid';
+  const glass = liquid ? `blur(${Math.max(2, nav.blur)}px) saturate(160%)` : undefined;
   // nav.color is the theme-derived nav color (an rgb()/hex string) — withAlpha handles both.
   return {
     background: withAlpha(nav.color, nav.opacity / 100),
     backdropFilter: glass,
     WebkitBackdropFilter: glass,
+    boxShadow: liquid ? 'inset 0 1px 0 rgba(255,255,255,0.6),inset 0 -1px 0 rgba(255,255,255,0.15)' : undefined,
     color: nav.text === 'light' ? '#f8fafc' : '#1f2733',
   };
 }

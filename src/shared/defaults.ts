@@ -45,8 +45,9 @@ export const DEFAULT_APP: AppConfig = {
   // header / sider / font are independent of the 工作区外观 (background) switch;
   // all default OFF so a fresh install changes nothing. font.family defaults to the
   // 无衬线 stack so flipping the switch on shows an immediate effect.
-  header: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 90, blur: 14, text: 'dark', texture: 85 },
-  sider: { enabled: false, style: 'frosted', color: '#ffffff', opacity: 86, blur: 16, text: 'dark', texture: 85 },
+  // Liquid-glass nav: low opacity + light blur so the refracted backdrop shows through.
+  header: { enabled: false, style: 'liquid', color: '#ffffff', opacity: 42, blur: 3, text: 'dark', refract: 60, aberration: 40 },
+  sider: { enabled: false, style: 'liquid', color: '#ffffff', opacity: 42, blur: 4, text: 'dark', refract: 55, aberration: 35 },
   font: { enabled: false, source: 'system', family: FONT_PRESETS[1].value, upload: { url: '', name: '', format: '' } },
   // scrollbar off by default (native); when enabled, 'always' shows / 'hidden' hides.
   scrollbar: { enabled: false, mode: 'always' },
@@ -90,8 +91,14 @@ function deepMerge<T>(base: T, over: any): T {
 
 /** Merge a partial (from DB / API) onto the defaults, producing a complete config. */
 export function mergeConfig(partial: any): ExtraThemeConfig {
+  const app = deepMerge(DEFAULT_APP, partial?.app);
+  // Migration: the nav 'frosted'/'material'/'水纹玻璃' styles were collapsed into 'liquid'.
+  // deepMerge keeps the stored string verbatim, so normalize here — any non-'solid' legacy
+  // value becomes 'liquid' (the removed `texture` field is simply never copied back).
+  app.header.style = app.header.style === 'solid' ? 'solid' : 'liquid';
+  app.sider.style = app.sider.style === 'solid' ? 'solid' : 'liquid';
   return {
-    app: deepMerge(DEFAULT_APP, partial?.app),
+    app,
     login: deepMerge(DEFAULT_LOGIN, partial?.login),
   };
 }

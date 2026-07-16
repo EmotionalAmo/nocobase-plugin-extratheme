@@ -12,8 +12,8 @@ describe('defaults', () => {
     );
   });
   it('app starting values match spec', () => {
-    expect(DEFAULT_APP.header).toMatchObject({ style: 'frosted', opacity: 90, blur: 14, text: 'dark' });
-    expect(DEFAULT_APP.sider).toMatchObject({ style: 'frosted', opacity: 86, blur: 16 });
+    expect(DEFAULT_APP.header).toMatchObject({ style: 'liquid', opacity: 42, blur: 3, text: 'dark', refract: 60, aberration: 40 });
+    expect(DEFAULT_APP.sider).toMatchObject({ style: 'liquid', opacity: 42, blur: 4, refract: 55, aberration: 35 });
   });
   it('scrollbar defaults off (native), mode always', () => {
     expect(DEFAULT_APP.scrollbar.enabled).toBe(false);
@@ -44,7 +44,7 @@ describe('defaults', () => {
     const m = mergeConfig({ app: { enabled: true, header: { opacity: 50 } } });
     expect(m.app.enabled).toBe(true);
     expect(m.app.header.opacity).toBe(50);
-    expect(m.app.header.blur).toBe(14); // not given -> default
+    expect(m.app.header.blur).toBe(3); // not given -> default
     expect(m.login.enabled).toBe(false); // whole group missing -> default
   });
   it('mergeConfig on empty returns full defaults', () => {
@@ -58,6 +58,6 @@ describe('defaults', () => {
   });
   it('mergeConfig does not mutate DEFAULT_APP', () => {
     mergeConfig({ app: { header: { opacity: 1 } } });
-    expect(DEFAULT_APP.header.opacity).toBe(90);
+    expect(DEFAULT_APP.header.opacity).toBe(42);
   });
 });
